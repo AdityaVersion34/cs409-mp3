@@ -1,4 +1,5 @@
 var User = require('../models/user');
+var Task = require('../models/task');
 
 module.exports = function (router) {
 
@@ -171,6 +172,55 @@ module.exports = function (router) {
                 message: "OK",
                 data: user
             });
+        });
+    });
+
+    // DELETE /api/users/:id - Delete a user by ID
+    userIdRoute.delete(function (req, res) {
+        User.findById(req.params.id, function (err, user) {
+            if (err) {
+                // Handle invalid ObjectId format as 404
+                return res.status(404).json({
+                    message: "User not found",
+                    data: {}
+                });
+            }
+
+            if (!user) {
+                return res.status(404).json({
+                    message: "User not found",
+                    data: {}
+                });
+            }
+
+            // Unassign all tasks that were assigned to this user
+            Task.updateMany(
+                { assignedUser: req.params.id },
+                { assignedUser: "", assignedUserName: "unassigned" },
+                function (err) {
+                    if (err) {
+                        return res.status(500).json({
+                            message: "Internal Server Error",
+                            data: {}
+                        });
+                    }
+
+                    // Now delete the user
+                    User.findByIdAndRemove(req.params.id, function (err, deletedUser) {
+                        if (err) {
+                            return res.status(500).json({
+                                message: "Internal Server Error",
+                                data: {}
+                            });
+                        }
+
+                        res.status(200).json({
+                            message: "User deleted successfully",
+                            data: deletedUser
+                        });
+                    });
+                }
+            );
         });
     });
 

@@ -1,0 +1,2451 @@
+
+╭─── Claude Code v2.0.29 ───────────────────────────────────────────────────────────────────────────────╮
+│                                     │ Tips for getting started                                        │
+│         Welcome back Aditya!        │ Run /init to create a CLAUDE.md file with instructions for Cla… │
+│                                     │ Run /install-github-app to tag @claude right from your Github … │
+│               ▐▛███▜▌               │ ─────────────────────────────────────────────────────────────── │
+│              ▝▜█████▛▘              │ Recent activity                                                 │
+│                ▘▘ ▝▝                │ No recent activity                                              │
+│                                     │                                                                 │
+│       Sonnet 4.5 · Claude Pro       │                                                                 │
+│   C:\Users\Aditya\cs409\cs409-mp3   │                                                                 │
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+> read through all my project files 
+
+● I'll explore your project files to understand the codebase structure. Let me start by finding all
+  the files in your project.
+
+● Search(pattern: "**/*")
+  ⎿  Found 12 files (ctrl+o to expand)
+
+● Now let me read through the key project files to understand your codebase:
+
+● Read(README.md)
+  ⎿  Read 175 lines
+
+● Read(FAQ.md)
+  ⎿  Read 208 lines
+
+● Read(package.json)
+  ⎿  Read 33 lines
+
+● Read(server.js)
+  ⎿  Read 40 lines
+
+● Read(.env)
+  ⎿  Read 5 lines
+
+● Read(models\user.js)
+  ⎿  Read 11 lines
+
+● Read(routes\index.js)
+  ⎿  Read 7 lines
+
+● Read(routes\home.js)
+  ⎿  Read 12 lines
+
+● Read(database_scripts\dbClean.py)
+  ⎿  Read 106 lines
+
+● Read(database_scripts\dbFill.py)
+  ⎿  Read 158 lines
+
+● Read(database_scripts\tasks.txt)
+  ⎿  Read 310 lines
+
+● I've read through all your project files. Here's a summary of your CS409 MP3 project:
+
+  Project Overview
+
+  This is a task management API assignment (APIed Piper) that requires building a RESTful API using
+  Node.js, Express, and MongoDB Atlas.
+
+  Current Implementation Status
+
+  The project is in its starter template state with minimal implementation:
+
+  - server.js:14 - Basic Express server setup (port 3000)
+  - server.js:17 - MongoDB connection is commented out (needs to be enabled)
+  - models/user.js:5-7 - User schema only has name field (incomplete)
+  - routes/home.js:5-8 - Simple home route that returns TOKEN from .env
+  - .env:3 - MongoDB connection string is configured
+
+  What Needs to Be Built
+
+  API Endpoints Required:
+
+  - /api/users - GET (list), POST (create)
+  - /api/users/:id - GET, PUT, DELETE
+  - /api/tasks - GET (list), POST (create)
+  - /api/tasks/:id - GET, PUT, DELETE
+
+  Query Parameters to Support:
+
+  where, sort, select, skip, limit, count
+
+  Schemas to Complete:
+
+  User Schema:
+  - name (String)
+  - email (String) - must be unique
+  - pendingTasks (Array of task IDs)
+  - dateCreated (Date)
+
+  Task Schema (needs to be created):
+  - name (String)
+  - description (String)
+  - deadline (Date)
+  - completed (Boolean)
+  - assignedUser (String - user ID)
+  - assignedUserName (String)
+  - dateCreated (Date)
+
+  Key Requirements:
+
+  - Two-way references between Tasks and Users
+  - Server-side validation (required fields, unique emails)
+  - Proper HTTP status codes (200, 201, 204, 400, 404, 500)
+  - JSON responses with message and data fields
+  - Database should have 20+ users and 100+ tasks
+
+  Database Scripts Available:
+
+  - dbClean.py - Clears all users and tasks
+  - dbFill.py - Populates with random data
+
+  The assignment is due November 4th, 2025 and needs significant implementation work to meet all
+  requirements.
+
+> before i really get into it, i want to test the end-to-end system, including my database. first, 
+please implement the user and task schemas, and just the /api/users POST endpoint with basic 
+functionality. 
+
+● I'll help you set up the schemas and a basic POST endpoint for users so you can test the end-to-end
+   system. Let me create a todo list to track this work.
+
+● Now let me implement the schemas and POST endpoint:
+
+● Update(models\user.js)
+  ⎿  Updated models\user.js with 17 additions and 1 removal
+        3    
+        4    // Define our user schema
+        5    var UserSchema = new mongoose.Schema({
+        6 -      name: String
+        6 +      name: {
+        7 +          type: String,
+        8 +          required: true
+        9 +      },
+       10 +      email: {
+       11 +          type: String,
+       12 +          required: true,
+       13 +          unique: true
+       14 +      },
+       15 +      pendingTasks: {
+       16 +          type: [String],
+       17 +          default: []
+       18 +      },
+       19 +      dateCreated: {
+       20 +          type: Date,
+       21 +          default: Date.now
+       22 +      }
+       23    });
+       24    
+       25    // Export the Mongoose model
+
+● Write(models\task.js)
+  ⎿  Wrote 1 lines to models\task.js       
+     // Load required packages
+     var mongoose = require('mongoose');
+     // Define our task schema
+     var TaskSchema = new mongoose.Schema({
+         name: {
+             type: String,
+             required: true
+         },
+         description: {
+
+● Write(routes\users.js)
+  ⎿  Wrote 1 lines to routes\users.js                
+     var User = require('../models/user');
+     module.exports = function (router) {
+         var usersRoute = router.route('/users');
+         // POST /api/users - Create a new user
+         usersRoute.post(function (req, res) {
+             // Validate required fields
+             if (!req.body.name || !req.body.email) {
+
+● Update(routes\index.js)
+  ⎿  Updated routes\index.js with 1 addition                   
+       3     */
+       4    module.exports = function (app, router) {
+       5        app.use('/api', require('./home.js')(router));
+       6 +      app.use('/api', require('./users.js')(router));
+       7    };
+
+● Update(server.js)
+  ⎿  Updated server.js with 1 addition and 1 removal                                       
+       14    var port = process.env.PORT || 3000;
+       15    
+       16    // Connect to a MongoDB --> Uncomment this once you have a connection string!!
+       17 -  //mongoose.connect(process.env.MONGODB_URI,  { useNewUrlParser: true });
+       17 +  mongoose.connect(process.env.MONGODB_URI,  { useNewUrlParser: true });
+       18    
+       19    // Allow CORS so that backend and frontend could be put on different servers
+       20    var allowCrossDomain = function (req, res, next) {
+
+● Perfect! I've completed the setup. Here's what I implemented:
+
+  What's Been Done:
+
+  1. User Schema (models/user.js:5-23) - Added all required fields:
+    - name (required)
+    - email (required, unique)
+    - pendingTasks (array, defaults to empty)
+    - dateCreated (auto-set to current date)
+  2. Task Schema (models/task.js) - Created complete schema with all fields:
+    - name, description, deadline, completed, assignedUser, assignedUserName, dateCreated
+  3. POST /api/users Endpoint (routes/users.js) - Implemented with:
+    - Validation for required name and email fields
+    - Duplicate email detection
+    - Proper HTTP status codes (201 for success, 400 for bad request, 500 for errors)
+    - JSON response with message and data fields
+  4. MongoDB Connection - Enabled in server.js:17
+
+  Test Your Setup:
+
+  Start the server:
+  npm start
+
+  Then use Postman or curl to test:
+  curl -X POST http://localhost:3000/api/users \
+    -H "Content-Type: application/x-www-form-urlencoded" \
+    -d "name=John Doe&email=john@example.com"
+
+  You should get a 201 response with the created user data, confirming your end-to-end connection to
+  MongoDB Atlas is working!
+
+> good, it's working well. now add the GET /api/users endpoint 
+
+● I'll add the GET /api/users endpoint with support for all the query parameters (where, sort,
+  select, skip, limit, count).
+
+● Update(routes\users.js)
+  ⎿  Updated routes\users.js with 85 additions                                              
+        4    
+        5        var usersRoute = router.route('/users');
+        6    
+        7 +      // GET /api/users - Get list of users with query parameters
+        8 +      usersRoute.get(function (req, res) {
+        9 +          // Build query
+       10 +          var query = User.find();
+       11 +  
+       12 +          // Apply 'where' filter if provided
+       13 +          if (req.query.where) {
+       14 +              try {
+       15 +                  var whereFilter = JSON.parse(req.query.where);
+       16 +                  query = query.where(whereFilter);
+       17 +              } catch (e) {
+       18 +                  return res.status(400).json({
+       19 +                      message: "Bad Request: Invalid JSON in 'where' parameter",
+       20 +                      data: {}
+       21 +                  });
+       22 +              }
+       23 +          }
+       24 +  
+       25 +          // Apply 'sort' if provided
+       26 +          if (req.query.sort) {
+       27 +              try {
+       28 +                  var sortOrder = JSON.parse(req.query.sort);
+       29 +                  query = query.sort(sortOrder);
+       30 +              } catch (e) {
+       31 +                  return res.status(400).json({
+       32 +                      message: "Bad Request: Invalid JSON in 'sort' parameter",
+       33 +                      data: {}
+       34 +                  });
+       35 +              }
+       36 +          }
+       37 +  
+       38 +          // Apply 'select' if provided
+       39 +          if (req.query.select) {
+       40 +              try {
+       41 +                  var selectFields = JSON.parse(req.query.select);
+       42 +                  query = query.select(selectFields);
+       43 +              } catch (e) {
+       44 +                  return res.status(400).json({
+       45 +                      message: "Bad Request: Invalid JSON in 'select' parameter",
+       46 +                      data: {}
+       47 +                  });
+       48 +              }
+       49 +          }
+       50 +  
+       51 +          // Apply 'skip' if provided
+       52 +          if (req.query.skip) {
+       53 +              query = query.skip(parseInt(req.query.skip));
+       54 +          }
+       55 +  
+       56 +          // Apply 'limit' if provided (no default limit for users)
+       57 +          if (req.query.limit) {
+       58 +              query = query.limit(parseInt(req.query.limit));
+       59 +          }
+       60 +  
+       61 +          // Check if 'count' is requested
+       62 +          if (req.query.count === 'true') {
+       63 +              query.countDocuments(function (err, count) {
+       64 +                  if (err) {
+       65 +                      return res.status(500).json({
+       66 +                          message: "Internal Server Error",
+       67 +                          data: {}
+       68 +                      });
+       69 +                  }
+       70 +                  res.status(200).json({
+       71 +                      message: "OK",
+       72 +                      data: count
+       73 +                  });
+       74 +              });
+       75 +          } else {
+       76 +              // Execute query and return results
+       77 +              query.exec(function (err, users) {
+       78 +                  if (err) {
+       79 +                      return res.status(500).json({
+       80 +                          message: "Internal Server Error",
+       81 +                          data: {}
+       82 +                      });
+       83 +                  }
+       84 +                  res.status(200).json({
+       85 +                      message: "OK",
+       86 +                      data: users
+       87 +                  });
+       88 +              });
+       89 +          }
+       90 +      });
+       91 +  
+       92        // POST /api/users - Create a new user
+       93        usersRoute.post(function (req, res) {
+       94            // Validate required fields
+
+● Perfect! I've implemented the GET /api/users endpoint with full query parameter support.
+
+  Features Added (routes/users.js:7-90):
+
+  - where - Filter results with MongoDB query (e.g., ?where={"name":"John Doe"})
+  - sort - Sort by fields (e.g., ?sort={"name":1} for ascending)
+  - select - Choose which fields to include/exclude (e.g., ?select={"_id":0})
+  - skip - Skip N results for pagination (e.g., ?skip=10)
+  - limit - Limit number of results (e.g., ?limit=5)
+  - count - Return count instead of documents (e.g., ?count=true)
+
+  All parameters can be combined in a single request!
+
+  Test Examples:
+
+  # Get all users
+  GET http://localhost:3000/api/users
+
+  # Get users sorted by name
+  GET http://localhost:3000/api/users?sort={"name":1}
+
+  # Get users without _id field
+  GET http://localhost:3000/api/users?select={"_id":0}
+
+  # Count total users
+  GET http://localhost:3000/api/users?count=true
+
+  # Pagination: skip 5, limit 10
+  GET http://localhost:3000/api/users?skip=5&limit=10
+
+> /usage 
+  ⎿  Status dialog dismissed
+
+> /usage 
+  ⎿  Status dialog dismissed
+
+> show me how to test these commands with curl 
+
+● Here are curl commands to test the GET /api/users endpoint:
+
+  # 1. Get all users
+  curl http://localhost:3000/api/users
+
+  # 2. Get users sorted by name (ascending)
+  curl "http://localhost:3000/api/users?sort={\"name\":1}"
+
+  # 3. Get users sorted by name (descending)
+  curl "http://localhost:3000/api/users?sort={\"name\":-1}"
+
+  # 4. Get users without _id field
+  curl "http://localhost:3000/api/users?select={\"_id\":0}"
+
+  # 5. Filter by specific name
+  curl "http://localhost:3000/api/users?where={\"name\":\"John Doe\"}"
+
+  # 6. Filter by specific email
+  curl "http://localhost:3000/api/users?where={\"email\":\"john@example.com\"}"
+
+  # 7. Count total users
+  curl "http://localhost:3000/api/users?count=true"
+
+  # 8. Pagination - skip 5, limit 10
+  curl "http://localhost:3000/api/users?skip=5&limit=10"
+
+  # 9. Combined query - sort by name, limit to 5, hide _id
+  curl "http://localhost:3000/api/users?sort={\"name\":1}&limit=5&select={\"_id\":0}"
+
+  # 10. Get user by ID (once you have a user ID from the database)
+  # Replace <user_id> with an actual ID from your database
+  curl "http://localhost:3000/api/users?where={\"_id\":\"<user_id>\"}"
+
+  For Windows CMD (if the above doesn't work):
+
+  Windows CMD handles quotes differently. Use these versions:
+
+  curl "http://localhost:3000/api/users?sort={"""name""":1}"
+
+  curl "http://localhost:3000/api/users?where={"""email""":"""john@example.com"""}"
+
+  URL-encoded version (works everywhere):
+
+  # Sort by name
+  curl "http://localhost:3000/api/users?sort=%7B%22name%22%3A1%7D"
+
+  # Where email equals john@example.com
+  curl "http://localhost:3000/api/users?where=%7B%22email%22%3A%22john%40example.com%22%7D"
+
+  Note: The quotes around the URL are important because of the special characters in JSON. Without
+  them, your shell might misinterpret the brackets and quotes.
+
+> the command you gave to to test post worked well, give me commands in that style 
+
+● Here are curl commands in the same style for testing GET /api/users:
+
+  # 1. Get all users
+  curl -X GET http://localhost:3000/api/users
+
+  # 2. Get users sorted by name (ascending)
+  curl -X GET "http://localhost:3000/api/users?sort={\"name\":1}"
+
+  # 3. Get users sorted by name (descending)
+  curl -X GET "http://localhost:3000/api/users?sort={\"name\":-1}"
+
+  # 4. Get users without _id field
+  curl -X GET "http://localhost:3000/api/users?select={\"_id\":0}"
+
+  # 5. Filter by specific name
+  curl -X GET "http://localhost:3000/api/users?where={\"name\":\"John Doe\"}"
+
+  # 6. Filter by specific email
+  curl -X GET "http://localhost:3000/api/users?where={\"email\":\"john@example.com\"}"
+
+  # 7. Count total users
+  curl -X GET "http://localhost:3000/api/users?count=true"
+
+  # 8. Pagination - skip 5, limit 10
+  curl -X GET "http://localhost:3000/api/users?skip=5&limit=10"
+
+  # 9. Combined query - sort by name, limit to 5, hide _id
+  curl -X GET "http://localhost:3000/api/users?sort={\"name\":1}&limit=5&select={\"_id\":0}"
+
+  # 10. Get only name and email fields
+  curl -X GET "http://localhost:3000/api/users?select={\"name\":1,\"email\":1,\"_id\":0}"
+
+  These should work consistently across different terminals!
+
+> $ curl -X GET "http://localhost:3000/api/users?sort={\"name\":1}"
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Error</title>
+</head>
+<body>
+<pre>Cannot GET /api/users</pre>
+</body>
+</html>\
+\
+i get this error 
+
+● It looks like the server needs to be restarted to pick up the new GET endpoint. Let me help you
+  restart it:
+
+● Bash(taskkill /F /IM node.exe 2>nul || echo "No node process found")
+  ⎿  Interrupted · What should Claude do instead?
+
+> curl -X GET "http://localhost:3000/api/users?where={\"name\":\"John Doe\"}"
+curl: (3) URL rejected: Malformed input to a URL function\
+\
+i think the command might be faulty, what's causing this? just using curl GET without specifiers 
+works 
+
+● The issue is with the special characters in the JSON. The curly braces {} and quotes need to be
+  URL-encoded. Here are the corrected commands:
+
+  # Get all users (this works)
+  curl -X GET http://localhost:3000/api/users
+
+  # Sort by name - URL encoded
+  curl -X GET "http://localhost:3000/api/users?sort=%7B%22name%22%3A1%7D"
+
+  # Filter by name - URL encoded
+  curl -X GET "http://localhost:3000/api/users?where=%7B%22name%22%3A%22John%20Doe%22%7D"
+
+  # Filter by email - URL encoded
+  curl -X GET "http://localhost:3000/api/users?where=%7B%22email%22%3A%22john@example.com%22%7D"
+
+  # Select fields (hide _id) - URL encoded
+  curl -X GET "http://localhost:3000/api/users?select=%7B%22_id%22%3A0%7D"
+
+  # Count users
+  curl -X GET "http://localhost:3000/api/users?count=true"
+
+  # Skip and limit (no special chars needed)
+  curl -X GET "http://localhost:3000/api/users?skip=0&limit=5"
+
+  URL Encoding Reference:
+  - { = %7B
+  - } = %7D
+  - " = %22
+  - : = %3A
+  -   (space) = %20
+
+  Alternatively, you can use Postman which handles this automatically, or test directly in your
+  browser for GET requests like:
+  http://localhost:3000/api/users
+
+> how can i use postman? 
+
+● Here's how to use Postman to test your API:
+
+  1. Download & Install Postman
+
+  - Go to https://www.postman.com/downloads/
+  - Download and install for your OS
+  - You can use it without creating an account (click "Skip and go to the app")
+
+  2. Test GET /api/users
+
+  1. Open Postman
+  2. Click the "+" tab to create a new request
+  3. Set the method dropdown to GET
+  4. Enter the URL: http://localhost:3000/api/users
+  5. Click Send
+
+  You should see the JSON response below!
+
+  3. Test with Query Parameters
+
+  Example 1: Sort by name
+  - URL: http://localhost:3000/api/users
+  - Click the Params tab (below the URL bar)
+  - Add key-value pairs:
+    - Key: sort | Value: {"name":1}
+  - Click Send
+
+  Example 2: Filter by email
+  - Key: where | Value: {"email":"john@example.com"}
+
+  Example 3: Multiple parameters
+  - Key: sort | Value: {"name":1}
+  - Key: limit | Value: 5
+  - Key: select | Value: {"_id":0}
+
+  4. Test POST /api/users
+
+  1. Change method to POST
+  2. URL: http://localhost:3000/api/users
+  3. Click the Body tab
+  4. Select x-www-form-urlencoded
+  5. Add key-value pairs:
+    - Key: name | Value: Jane Smith
+    - Key: email | Value: jane@example.com
+  6. Click Send
+
+  Postman is much easier than curl because it handles all the URL encoding automatically and shows
+  formatted JSON responses!
+
+> ok. i'm now using postman so you can provide test commands in that simple json native format from 
+now on. Now i'd like you to implement GET by ID 
+
+● I'll implement the GET /api/users/:id endpoint now.
+
+● Read(routes\users.js)
+  ⎿  Read 137 lines
+
+● Update(routes\users.js)
+  ⎿  Updated routes\users.js with 42 additions                                               
+       132            });
+       133        });
+       134    
+       135 +      var userIdRoute = router.route('/users/:id');
+       136 +  
+       137 +      // GET /api/users/:id - Get a specific user by ID
+       138 +      userIdRoute.get(function (req, res) {
+       139 +          var query = User.findById(req.params.id);
+       140 +  
+       141 +          // Apply 'select' if provided
+       142 +          if (req.query.select) {
+       143 +              try {
+       144 +                  var selectFields = JSON.parse(req.query.select);
+       145 +                  query = query.select(selectFields);
+       146 +              } catch (e) {
+       147 +                  return res.status(400).json({
+       148 +                      message: "Bad Request: Invalid JSON in 'select' parameter",
+       149 +                      data: {}
+       150 +                  });
+       151 +              }
+       152 +          }
+       153 +  
+       154 +          query.exec(function (err, user) {
+       155 +              if (err) {
+       156 +                  // Handle invalid ObjectId format as 404
+       157 +                  return res.status(404).json({
+       158 +                      message: "User not found",
+       159 +                      data: {}
+       160 +                  });
+       161 +              }
+       162 +  
+       163 +              if (!user) {
+       164 +                  return res.status(404).json({
+       165 +                      message: "User not found",
+       166 +                      data: {}
+       167 +                  });
+       168 +              }
+       169 +  
+       170 +              res.status(200).json({
+       171 +                  message: "OK",
+       172 +                  data: user
+       173 +              });
+       174 +          });
+       175 +      });
+       176 +  
+       177        return router;
+       178    }
+
+● Perfect! I've implemented GET /api/users/:id (routes/users.js:137-175).
+
+  Test in Postman:
+
+  1. Get a user by ID
+  - Method: GET
+  - URL: http://localhost:3000/api/users/{user_id}
+    - Replace {user_id} with an actual ID from your database
+    - Example: http://localhost:3000/api/users/673a1234567890abcdef1234
+
+  2. Get a user with select parameter
+  - Method: GET
+  - URL: http://localhost:3000/api/users/{user_id}
+  - Params tab:
+    - Key: select | Value: {"_id":0}
+
+  3. Test 404 error (user not found)
+  - Method: GET
+  - URL: http://localhost:3000/api/users/000000000000000000000000
+  - Should return 404 with message "User not found"
+
+  4. Test invalid ID format
+  - Method: GET
+  - URL: http://localhost:3000/api/users/invalid123
+  - Should return 404
+
+  Tip: First do a GET on /api/users to see all users and copy a real _id value to test with!
+
+> Now add basic functionality for POST /api/tasks 
+
+● I'll implement the POST /api/tasks endpoint with basic functionality.
+
+● Write(routes\tasks.js)
+  ⎿  Wrote 1 lines to routes\tasks.js                   
+     var Task = require('../models/task');
+     module.exports = function (router) {
+         var tasksRoute = router.route('/tasks');
+         // POST /api/tasks - Create a new task
+         tasksRoute.post(function (req, res) {
+             // Validate required fields
+             if (!req.body.name || !req.body.deadline) {
+
+● Update(routes\index.js)
+  ⎿  Updated routes\index.js with 1 addition                   
+       4    module.exports = function (app, router) {
+       5        app.use('/api', require('./home.js')(router));
+       6        app.use('/api', require('./users.js')(router));
+       7 +      app.use('/api', require('./tasks.js')(router));
+       8    };
+
+● Done! I've implemented the POST /api/tasks endpoint.
+
+  Test in Postman:
+
+  1. Create a basic task (required fields only)
+  - Method: POST
+  - URL: http://localhost:3000/api/tasks
+  - Body tab → x-www-form-urlencoded
+  - Add:
+    - Key: name | Value: Complete homework
+    - Key: deadline | Value: 2025-11-10
+
+  2. Create a complete task (all fields)
+  - Method: POST
+  - URL: http://localhost:3000/api/tasks
+  - Body tab → x-www-form-urlencoded
+  - Add:
+    - Key: name | Value: Finish project
+    - Key: deadline | Value: 2025-11-15
+    - Key: description | Value: Complete the final presentation
+    - Key: completed | Value: false
+    - Key: assignedUser | Value: {user_id} (use an actual user ID)
+    - Key: assignedUserName | Value: John Doe
+
+  3. Test validation (missing required field)
+  - Method: POST
+  - URL: http://localhost:3000/api/tasks
+  - Body: Only add name (no deadline)
+  - Should return 400 error
+
+  The endpoint validates that both name and deadline are provided, and sets reasonable defaults for
+  all other fields!
+
+> i want you to combine all the keys and parameters into a single url i can paste in postman 
+
+● For POST requests, the data goes in the Body, not the URL. Here's the easiest way to test in
+  Postman:
+
+  Method 1: JSON Body (Easiest to copy-paste)
+
+  Create a task:
+  - Method: POST
+  - URL: http://localhost:3000/api/tasks
+  - Body tab → Select raw → Select JSON from dropdown
+  - Paste this:
+
+  {
+    "name": "Complete homework",
+    "deadline": "2025-11-15",
+    "description": "Finish the assignment",
+    "completed": false,
+    "assignedUser": "",
+    "assignedUserName": "unassigned"
+  }
+
+  However, your current code expects x-www-form-urlencoded. Let me update the route to also accept
+  JSON:
+
+● Read(routes\tasks.js)
+  ⎿  Read 54 lines
+
+● Good news - your server already accepts JSON (thanks to body-parser in server.js). So you can use
+  the JSON method:
+
+  In Postman:
+
+  POST a task - Copy/Paste Method:
+
+  1. Method: POST
+  2. URL: http://localhost:3000/api/tasks
+  3. Click Body tab
+  4. Select raw
+  5. Select JSON from the dropdown (right side)
+  6. Paste this:
+
+  {
+    "name": "Complete homework",
+    "deadline": "2025-11-15",
+    "description": "Finish the assignment",
+    "completed": false
+  }
+
+  Or test with a user assigned:
+  {
+    "name": "Review code",
+    "deadline": "2025-11-20",
+    "description": "Review pull requests",
+    "completed": false,
+    "assignedUser": "673a1234567890abcdef1234",
+    "assignedUserName": "John Doe"
+  }
+  (Replace the assignedUser value with a real user ID from your database)
+
+  Just paste the URL in the URL bar and the JSON in the body - much easier than adding individual
+  key-value pairs!
+
+> now i want you to implement GET /api/tasks 
+
+● I'll implement the GET /api/tasks endpoint with all query parameters support.
+
+● Update(routes\tasks.js)
+  ⎿  Updated routes\tasks.js with 87 additions                                              
+        4    
+        5        var tasksRoute = router.route('/tasks');
+        6    
+        7 +      // GET /api/tasks - Get list of tasks with query parameters
+        8 +      tasksRoute.get(function (req, res) {
+        9 +          // Build query
+       10 +          var query = Task.find();
+       11 +  
+       12 +          // Apply 'where' filter if provided
+       13 +          if (req.query.where) {
+       14 +              try {
+       15 +                  var whereFilter = JSON.parse(req.query.where);
+       16 +                  query = query.where(whereFilter);
+       17 +              } catch (e) {
+       18 +                  return res.status(400).json({
+       19 +                      message: "Bad Request: Invalid JSON in 'where' parameter",
+       20 +                      data: {}
+       21 +                  });
+       22 +              }
+       23 +          }
+       24 +  
+       25 +          // Apply 'sort' if provided
+       26 +          if (req.query.sort) {
+       27 +              try {
+       28 +                  var sortOrder = JSON.parse(req.query.sort);
+       29 +                  query = query.sort(sortOrder);
+       30 +              } catch (e) {
+       31 +                  return res.status(400).json({
+       32 +                      message: "Bad Request: Invalid JSON in 'sort' parameter",
+       33 +                      data: {}
+       34 +                  });
+       35 +              }
+       36 +          }
+       37 +  
+       38 +          // Apply 'select' if provided
+       39 +          if (req.query.select) {
+       40 +              try {
+       41 +                  var selectFields = JSON.parse(req.query.select);
+       42 +                  query = query.select(selectFields);
+       43 +              } catch (e) {
+       44 +                  return res.status(400).json({
+       45 +                      message: "Bad Request: Invalid JSON in 'select' parameter",
+       46 +                      data: {}
+       47 +                  });
+       48 +              }
+       49 +          }
+       50 +  
+       51 +          // Apply 'skip' if provided
+       52 +          if (req.query.skip) {
+       53 +              query = query.skip(parseInt(req.query.skip));
+       54 +          }
+       55 +  
+       56 +          // Apply 'limit' if provided, default to 100 for tasks
+       57 +          if (req.query.limit) {
+       58 +              query = query.limit(parseInt(req.query.limit));
+       59 +          } else {
+       60 +              query = query.limit(100);
+       61 +          }
+       62 +  
+       63 +          // Check if 'count' is requested
+       64 +          if (req.query.count === 'true') {
+       65 +              query.countDocuments(function (err, count) {
+       66 +                  if (err) {
+       67 +                      return res.status(500).json({
+       68 +                          message: "Internal Server Error",
+       69 +                          data: {}
+       70 +                      });
+       71 +                  }
+       72 +                  res.status(200).json({
+       73 +                      message: "OK",
+       74 +                      data: count
+       75 +                  });
+       76 +              });
+       77 +          } else {
+       78 +              // Execute query and return results
+       79 +              query.exec(function (err, tasks) {
+       80 +                  if (err) {
+       81 +                      return res.status(500).json({
+       82 +                          message: "Internal Server Error",
+       83 +                          data: {}
+       84 +                      });
+       85 +                  }
+       86 +                  res.status(200).json({
+       87 +                      message: "OK",
+       88 +                      data: tasks
+       89 +                  });
+       90 +              });
+       91 +          }
+       92 +      });
+       93 +  
+       94        // POST /api/tasks - Create a new task
+       95        tasksRoute.post(function (req, res) {
+       96            // Validate required fields
+
+● Perfect! I've implemented GET /api/tasks with all query parameters and a default limit of 100
+  (routes/tasks.js:7-92).
+
+  Test in Postman:
+
+  1. Get all tasks (limited to 100 by default)
+  - Method: GET
+  - URL: http://localhost:3000/api/tasks
+
+  2. Get completed tasks
+  - URL: http://localhost:3000/api/tasks
+  - Params tab:
+    - Key: where | Value: {"completed":true}
+
+  3. Get incomplete tasks
+  - Params:
+    - Key: where | Value: {"completed":false}
+
+  4. Get tasks sorted by deadline
+  - Params:
+    - Key: sort | Value: {"deadline":1}
+
+  5. Get tasks assigned to a specific user
+  - Params:
+    - Key: where | Value: {"assignedUser":"673a1234567890abcdef1234"}
+    - (Replace with actual user ID)
+
+  6. Count total tasks
+  - Params:
+    - Key: count | Value: true
+
+  7. Pagination (skip 10, limit 5)
+  - Params:
+    - Key: skip | Value: 10
+    - Key: limit | Value: 5
+
+  8. Select specific fields only
+  - Params:
+    - Key: select | Value: {"name":1,"deadline":1,"_id":0}
+
+  All parameters work together, just like with users!
+
+> once again, i want you to present test commands in a single url. since there aren't many kv pairs, 
+i think a single url command would be more practical than using json 
+
+● Here are the complete URLs you can paste directly into Postman:
+
+  Test URLs for GET /api/tasks:
+
+  1. Get all tasks
+  http://localhost:3000/api/tasks
+
+  2. Get completed tasks
+  http://localhost:3000/api/tasks?where={"completed":true}
+
+  3. Get incomplete tasks
+  http://localhost:3000/api/tasks?where={"completed":false}
+
+  4. Get tasks sorted by deadline (ascending)
+  http://localhost:3000/api/tasks?sort={"deadline":1}
+
+  5. Get tasks sorted by name
+  http://localhost:3000/api/tasks?sort={"name":1}
+
+  6. Count total tasks
+  http://localhost:3000/api/tasks?count=true
+
+  7. Get first 5 tasks
+  http://localhost:3000/api/tasks?limit=5
+
+  8. Pagination - skip 10, get next 5
+  http://localhost:3000/api/tasks?skip=10&limit=5
+
+  9. Get only name and deadline fields
+  http://localhost:3000/api/tasks?select={"name":1,"deadline":1,"_id":0}
+
+  10. Combined: completed tasks, sorted by deadline, limit 10
+  http://localhost:3000/api/tasks?where={"completed":true}&sort={"deadline":1}&limit=10
+
+  Just paste any of these directly into Postman's URL bar and hit Send!
+
+> ok, now add GET tasks by ID 
+
+● I'll implement the GET /api/tasks/:id endpoint now.
+
+● Update(routes\tasks.js)
+  ⎿  Updated routes\tasks.js with 42 additions                                               
+       136            });
+       137        });
+       138    
+       139 +      var taskIdRoute = router.route('/tasks/:id');
+       140 +  
+       141 +      // GET /api/tasks/:id - Get a specific task by ID
+       142 +      taskIdRoute.get(function (req, res) {
+       143 +          var query = Task.findById(req.params.id);
+       144 +  
+       145 +          // Apply 'select' if provided
+       146 +          if (req.query.select) {
+       147 +              try {
+       148 +                  var selectFields = JSON.parse(req.query.select);
+       149 +                  query = query.select(selectFields);
+       150 +              } catch (e) {
+       151 +                  return res.status(400).json({
+       152 +                      message: "Bad Request: Invalid JSON in 'select' parameter",
+       153 +                      data: {}
+       154 +                  });
+       155 +              }
+       156 +          }
+       157 +  
+       158 +          query.exec(function (err, task) {
+       159 +              if (err) {
+       160 +                  // Handle invalid ObjectId format as 404
+       161 +                  return res.status(404).json({
+       162 +                      message: "Task not found",
+       163 +                      data: {}
+       164 +                  });
+       165 +              }
+       166 +  
+       167 +              if (!task) {
+       168 +                  return res.status(404).json({
+       169 +                      message: "Task not found",
+       170 +                      data: {}
+       171 +                  });
+       172 +              }
+       173 +  
+       174 +              res.status(200).json({
+       175 +                  message: "OK",
+       176 +                  data: task
+       177 +              });
+       178 +          });
+       179 +      });
+       180 +  
+       181        return router;
+       182    }
+
+● Done! I've implemented GET /api/tasks/:id (routes/tasks.js:141-179).
+
+  Test URLs:
+
+  1. Get a task by ID
+  http://localhost:3000/api/tasks/673a1234567890abcdef1234
+  (Replace with an actual task ID from your database)
+
+  2. Get a task with select parameter (only name and deadline)
+  http://localhost:3000/api/tasks/673a1234567890abcdef1234?select={"name":1,"deadline":1,"_id":0}
+
+  3. Test 404 error (task not found)
+  http://localhost:3000/api/tasks/000000000000000000000000
+
+  4. Test invalid ID format (should return 404)
+  http://localhost:3000/api/tasks/invalidid123
+
+  Tip: First do a GET on http://localhost:3000/api/tasks to see all tasks and copy a real _id value
+  to test with!
+
+> ok, now add functionality to DELETE by a user ID 
+
+● I'll implement the DELETE /api/users/:id endpoint. According to the requirements, when deleting a
+  user, we need to unassign all their pending tasks to maintain two-way references.
+
+● Read(routes\users.js)
+  ⎿  Read 45 lines
+
+● Update(routes\users.js)
+  ⎿  Updated routes\users.js with 1 addition     
+       1    var User = require('../models/user');
+       2 +  var Task = require('../models/task');
+       3    
+       4    module.exports = function (router) {
+       5    
+
+● Update(routes\users.js)
+  ⎿  Updated routes\users.js with 49 additions                                         
+       175            });
+       176        });
+       177    
+       178 +      // DELETE /api/users/:id - Delete a user by ID
+       179 +      userIdRoute.delete(function (req, res) {
+       180 +          User.findById(req.params.id, function (err, user) {
+       181 +              if (err) {
+       182 +                  // Handle invalid ObjectId format as 404
+       183 +                  return res.status(404).json({
+       184 +                      message: "User not found",
+       185 +                      data: {}
+       186 +                  });
+       187 +              }
+       188 +  
+       189 +              if (!user) {
+       190 +                  return res.status(404).json({
+       191 +                      message: "User not found",
+       192 +                      data: {}
+       193 +                  });
+       194 +              }
+       195 +  
+       196 +              // Unassign all tasks that were assigned to this user
+       197 +              Task.updateMany(
+       198 +                  { assignedUser: req.params.id },
+       199 +                  { assignedUser: "", assignedUserName: "unassigned" },
+       200 +                  function (err) {
+       201 +                      if (err) {
+       202 +                          return res.status(500).json({
+       203 +                              message: "Internal Server Error",
+       204 +                              data: {}
+       205 +                          });
+       206 +                      }
+       207 +  
+       208 +                      // Now delete the user
+       209 +                      User.findByIdAndRemove(req.params.id, function (err, 
+           + deletedUser) {
+       210 +                          if (err) {
+       211 +                              return res.status(500).json({
+       212 +                                  message: "Internal Server Error",
+       213 +                                  data: {}
+       214 +                              });
+       215 +                          }
+       216 +  
+       217 +                          res.status(200).json({
+       218 +                              message: "User deleted successfully",
+       219 +                              data: deletedUser
+       220 +                          });
+       221 +                      });
+       222 +                  }
+       223 +              );
+       224 +          });
+       225 +      });
+       226 +  
+       227        return router;
+       228    }
+
+● Done! I've implemented DELETE /api/users/:id (routes/users.js:178-225). This endpoint maintains
+  two-way references by unassigning all tasks that were assigned to the deleted user.
+
+  Test URLs:
+
+  1. Delete a user by ID
+  Method: DELETE
+  URL: http://localhost:3000/api/users/673a1234567890abcdef1234
+  (Replace with an actual user ID from your database)
+
+  2. Test 404 error (user not found)
+  Method: DELETE
+  URL: http://localhost:3000/api/users/000000000000000000000000
+
+  3. Test invalid ID format
+  Method: DELETE
+  URL: http://localhost:3000/api/users/invalidid123
+
+  What happens when you delete a user:
+
+  1. All tasks assigned to this user are unassigned (assignedUser = "", assignedUserName =
+  "unassigned")
+  2. The user is deleted from the database
+  3. Returns the deleted user data with 200 status
+
+  To test the two-way reference:
+  1. Create a user with POST /api/users
+  2. Create a task assigned to that user with POST /api/tasks
+  3. Delete the user with DELETE /api/users/:id
+  4. Check the task with GET /api/tasks/:id - it should now be unassigned!
+
+> this is all working fine. on a separate note, i'm trying to deploy this api to render. the current 
+version of my codebase is deployed, and it says my service is live, but all i see on the page is: 
+Cannot GET / 
+
+● The "Cannot GET /" error means you don't have a route defined for the root path. Your API only has
+  routes under /api/, but nothing at /.
+
+  Let me add a simple root route to show your API is running:
+
+● Update(routes\home.js)
+  ⎿  Updated routes\home.js with 7 additions and 2 removals                               
+        3        var homeRoute = router.route('/');
+        4    
+        5        homeRoute.get(function (req, res) {
+        6 -          var connectionString = process.env.TOKEN;
+        7 -          res.json({ message: 'My connection string is ' + connectionString });
+        6 +          res.json({
+        7 +              message: 'Welcome to the Task Management API',
+        8 +              endpoints: {
+        9 +                  users: '/api/users',
+       10 +                  tasks: '/api/tasks'
+       11 +              }
+       12 +          });
+       13        });
+       14    
+       15        return router;
+
+● Actually, wait - I need to add a route at the actual root /, not /api/. Let me add that to your
+  server.js:
+
+● Update(server.js)
+  ⎿  Updated server.js with 11 additions                           
+       31    }));
+       32    app.use(bodyParser.json());
+       33    
+       34 +  // Root route
+       35 +  app.get('/', function(req, res) {
+       36 +      res.json({
+       37 +          message: 'Welcome to the Task Management API',
+       38 +          endpoints: {
+       39 +              users: '/api/users',
+       40 +              tasks: '/api/tasks'
+       41 +          }
+       42 +      });
+       43 +  });
+       44 +  
+       45    // Use routes as a module (see index.js)
+       46    require('./routes')(app, router);
+       47    
+
+● Perfect! Now when you deploy to Render and visit the root URL, you'll see:
+
+  {
+    "message": "Welcome to the Task Management API",
+    "endpoints": {
+      "users": "/api/users",
+      "tasks": "/api/tasks"
+    }
+  }
+
+  To test locally:
+
+  http://localhost:3000/
+
+  After deploying to Render:
+
+  Your Render URL should now show this message instead of "Cannot GET /". Your API endpoints will
+  work at:
+  - https://your-app.onrender.com/api/users
+  - https://your-app.onrender.com/api/tasks
+
+  Commit and push these changes to your repository, and Render will automatically redeploy!
+
+> /usage 
+  ⎿  Status dialog dismissed
+
+> great, that works. now add DELETE functionality for tasks by ID 
+
+● I'll implement the DELETE /api/tasks/:id endpoint with two-way reference handling.
+
+● Read(routes\tasks.js)
+  ⎿  Read 45 lines
+
+● Update(routes\tasks.js)
+  ⎿  Updated routes\tasks.js with 1 addition     
+       1    var Task = require('../models/task');
+       2 +  var User = require('../models/user');
+       3    
+       4    module.exports = function (router) {
+       5    
+
+● Update(routes\tasks.js)
+  ⎿  Updated routes\tasks.js with 65 additions                                                   
+       179            });
+       180        });
+       181    
+       182 +      // DELETE /api/tasks/:id - Delete a task by ID
+       183 +      taskIdRoute.delete(function (req, res) {
+       184 +          Task.findById(req.params.id, function (err, task) {
+       185 +              if (err) {
+       186 +                  // Handle invalid ObjectId format as 404
+       187 +                  return res.status(404).json({
+       188 +                      message: "Task not found",
+       189 +                      data: {}
+       190 +                  });
+       191 +              }
+       192 +  
+       193 +              if (!task) {
+       194 +                  return res.status(404).json({
+       195 +                      message: "Task not found",
+       196 +                      data: {}
+       197 +                  });
+       198 +              }
+       199 +  
+       200 +              // If task is assigned to a user, remove it from their pendingTasks
+       201 +              if (task.assignedUser && task.assignedUser !== "") {
+       202 +                  User.findById(task.assignedUser, function (err, user) {
+       203 +                      if (!err && user) {
+       204 +                          // Remove the task ID from the user's pendingTasks array
+       205 +                          user.pendingTasks = 
+           + user.pendingTasks.filter(function(taskId) {
+       206 +                              return taskId !== req.params.id;
+       207 +                          });
+       208 +                          user.save(function (err) {
+       209 +                              // Continue with deletion even if user update fails
+       210 +                          });
+       211 +                      }
+       212 +  
+       213 +                      // Delete the task
+       214 +                      Task.findByIdAndRemove(req.params.id, function (err, 
+           + deletedTask) {
+       215 +                          if (err) {
+       216 +                              return res.status(500).json({
+       217 +                                  message: "Internal Server Error",
+       218 +                                  data: {}
+       219 +                              });
+       220 +                          }
+       221 +  
+       222 +                          res.status(200).json({
+       223 +                              message: "Task deleted successfully",
+       224 +                              data: deletedTask
+       225 +                          });
+       226 +                      });
+       227 +                  });
+       228 +              } else {
+       229 +                  // Task is not assigned, just delete it
+       230 +                  Task.findByIdAndRemove(req.params.id, function (err, deletedTask) {
+       231 +                      if (err) {
+       232 +                          return res.status(500).json({
+       233 +                              message: "Internal Server Error",
+       234 +                              data: {}
+       235 +                          });
+       236 +                      }
+       237 +  
+       238 +                      res.status(200).json({
+       239 +                          message: "Task deleted successfully",
+       240 +                          data: deletedTask
+       241 +                      });
+       242 +                  });
+       243 +              }
+       244 +          });
+       245 +      });
+       246 +  
+       247        return router;
+       248    }
+
+● Perfect! I've implemented DELETE /api/tasks/:id (routes/tasks.js:182-245) with two-way reference
+  handling.
+
+  Test URLs:
+
+  1. Delete a task by ID
+  Method: DELETE
+  URL: http://localhost:3000/api/tasks/673a1234567890abcdef1234
+  (Replace with an actual task ID from your database)
+
+  2. Test 404 error (task not found)
+  Method: DELETE
+  URL: http://localhost:3000/api/tasks/000000000000000000000000
+
+  3. Test invalid ID format
+  Method: DELETE
+  URL: http://localhost:3000/api/tasks/invalidid123
+
+  What happens when you delete a task:
+
+  1. If the task is assigned to a user, it's removed from that user's pendingTasks array
+  2. The task is deleted from the database
+  3. Returns the deleted task data with 200 status
+
+  To test the two-way reference:
+  1. Create a user and note their ID
+  2. Create a task assigned to that user (include the task in user's pendingTasks)
+  3. Delete the task with DELETE /api/tasks/:id
+  4. Check the user with GET /api/users/:id - the task should be removed from their pendingTasks!
+
+> now i want you to add PUT functionality for users and tasks, as described in README.md 
+
+● I'll implement PUT functionality for both users and tasks with proper two-way reference handling as
+   described in the README.
+
+● Update(routes\users.js)
+  ⎿  Updated routes\users.js with 97 additions                                                    
+       175            });
+       176        });
+       177    
+       178 +      // PUT /api/users/:id - Update a user by ID
+       179 +      userIdRoute.put(function (req, res) {
+       180 +          // Validate required fields
+       181 +          if (!req.body.name || !req.body.email) {
+       182 +              return res.status(400).json({
+       183 +                  message: "Bad Request: Name and email are required",
+       184 +                  data: {}
+       185 +              });
+       186 +          }
+       187 +  
+       188 +          User.findById(req.params.id, function (err, user) {
+       189 +              if (err) {
+       190 +                  return res.status(404).json({
+       191 +                      message: "User not found",
+       192 +                      data: {}
+       193 +                  });
+       194 +              }
+       195 +  
+       196 +              if (!user) {
+       197 +                  return res.status(404).json({
+       198 +                      message: "User not found",
+       199 +                      data: {}
+       200 +                  });
+       201 +              }
+       202 +  
+       203 +              // Check for duplicate email (but allow if it's the same user)
+       204 +              User.findOne({ email: req.body.email }, function (err, existingUser) {
+       205 +                  if (err) {
+       206 +                      return res.status(500).json({
+       207 +                          message: "Internal Server Error",
+       208 +                          data: {}
+       209 +                      });
+       210 +                  }
+       211 +  
+       212 +                  if (existingUser && existingUser._id.toString() !== req.params.id) {
+       213 +                      return res.status(400).json({
+       214 +                          message: "Bad Request: User with this email already exists",
+       215 +                          data: {}
+       216 +                      });
+       217 +                  }
+       218 +  
+       219 +                  // Store old pendingTasks
+       220 +                  var oldPendingTasks = user.pendingTasks || [];
+       221 +                  var newPendingTasks = req.body.pendingTasks || [];
+       222 +  
+       223 +                  // Update user fields
+       224 +                  user.name = req.body.name;
+       225 +                  user.email = req.body.email;
+       226 +                  user.pendingTasks = newPendingTasks;
+       227 +  
+       228 +                  // Save the updated user
+       229 +                  user.save(function (err, updatedUser) {
+       230 +                      if (err) {
+       231 +                          return res.status(500).json({
+       232 +                              message: "Internal Server Error",
+       233 +                              data: {}
+       234 +                          });
+       235 +                      }
+       236 +  
+       237 +                      // Update two-way references for tasks
+       238 +                      // Tasks that were removed from pendingTasks should be 
+           + unassigned
+       239 +                      var removedTasks = oldPendingTasks.filter(function(taskId) {
+       240 +                          return newPendingTasks.indexOf(taskId) === -1;
+       241 +                      });
+       242 +  
+       243 +                      // Tasks that were added to pendingTasks should be assigned to 
+           + this user
+       244 +                      var addedTasks = newPendingTasks.filter(function(taskId) {
+       245 +                          return oldPendingTasks.indexOf(taskId) === -1;
+       246 +                      });
+       247 +  
+       248 +                      // Unassign removed tasks
+       249 +                      if (removedTasks.length > 0) {
+       250 +                          Task.updateMany(
+       251 +                              { _id: { $in: removedTasks } },
+       252 +                              { assignedUser: "", assignedUserName: "unassigned" },
+       253 +                              function (err) {}
+       254 +                          );
+       255 +                      }
+       256 +  
+       257 +                      // Assign added tasks
+       258 +                      if (addedTasks.length > 0) {
+       259 +                          Task.updateMany(
+       260 +                              { _id: { $in: addedTasks } },
+       261 +                              { assignedUser: req.params.id, assignedUserName: 
+           + user.name },
+       262 +                              function (err) {}
+       263 +                          );
+       264 +                      }
+       265 +  
+       266 +                      res.status(200).json({
+       267 +                          message: "User updated successfully",
+       268 +                          data: updatedUser
+       269 +                      });
+       270 +                  });
+       271 +              });
+       272 +          });
+       273 +      });
+       274 +  
+       275        // DELETE /api/users/:id - Delete a user by ID
+       276        userIdRoute.delete(function (req, res) {
+       277            User.findById(req.params.id, function (err, user) {
+
+● Update(routes\tasks.js)
+  ⎿  Updated routes\tasks.js with 106 additions                                                   
+       179            });
+       180        });
+       181    
+       182 +      // PUT /api/tasks/:id - Update a task by ID
+       183 +      taskIdRoute.put(function (req, res) {
+       184 +          // Validate required fields
+       185 +          if (!req.body.name || !req.body.deadline) {
+       186 +              return res.status(400).json({
+       187 +                  message: "Bad Request: Name and deadline are required",
+       188 +                  data: {}
+       189 +              });
+       190 +          }
+       191 +  
+       192 +          Task.findById(req.params.id, function (err, task) {
+       193 +              if (err) {
+       194 +                  return res.status(404).json({
+       195 +                      message: "Task not found",
+       196 +                      data: {}
+       197 +                  });
+       198 +              }
+       199 +  
+       200 +              if (!task) {
+       201 +                  return res.status(404).json({
+       202 +                      message: "Task not found",
+       203 +                      data: {}
+       204 +                  });
+       205 +              }
+       206 +  
+       207 +              // Store old values
+       208 +              var oldAssignedUser = task.assignedUser || "";
+       209 +              var oldCompleted = task.completed || false;
+       210 +  
+       211 +              // Update task fields
+       212 +              task.name = req.body.name;
+       213 +              task.description = req.body.description || "";
+       214 +              task.deadline = req.body.deadline;
+       215 +              task.completed = req.body.completed !== undefined ? req.body.completed :
+           +  false;
+       216 +              task.assignedUser = req.body.assignedUser || "";
+       217 +              task.assignedUserName = req.body.assignedUserName || "unassigned";
+       218 +  
+       219 +              var newAssignedUser = task.assignedUser;
+       220 +              var newCompleted = task.completed;
+       221 +  
+       222 +              // Save the updated task
+       223 +              task.save(function (err, updatedTask) {
+       224 +                  if (err) {
+       225 +                      return res.status(500).json({
+       226 +                          message: "Internal Server Error",
+       227 +                          data: {}
+       228 +                      });
+       229 +                  }
+       230 +  
+       231 +                  // Handle two-way reference updates
+       232 +                  var taskId = req.params.id;
+       233 +  
+       234 +                  // Case 1: AssignedUser changed
+       235 +                  if (oldAssignedUser !== newAssignedUser) {
+       236 +                      // Remove from old user's pendingTasks
+       237 +                      if (oldAssignedUser && oldAssignedUser !== "") {
+       238 +                          User.findById(oldAssignedUser, function (err, oldUser) {
+       239 +                              if (!err && oldUser) {
+       240 +                                  oldUser.pendingTasks = 
+           + oldUser.pendingTasks.filter(function(id) {
+       241 +                                      return id !== taskId;
+       242 +                                  });
+       243 +                                  oldUser.save(function (err) {});
+       244 +                              }
+       245 +                          });
+       246 +                      }
+       247 +  
+       248 +                      // Add to new user's pendingTasks (only if not completed)
+       249 +                      if (newAssignedUser && newAssignedUser !== "" && !newCompleted) 
+           + {
+       250 +                          User.findById(newAssignedUser, function (err, newUser) {
+       251 +                              if (!err && newUser) {
+       252 +                                  if (newUser.pendingTasks.indexOf(taskId) === -1) {
+       253 +                                      newUser.pendingTasks.push(taskId);
+       254 +                                      newUser.save(function (err) {});
+       255 +                                  }
+       256 +                              }
+       257 +                          });
+       258 +                      }
+       259 +                  }
+       260 +                  // Case 2: AssignedUser same, but completion status changed
+       261 +                  else if (oldCompleted !== newCompleted && newAssignedUser && 
+           + newAssignedUser !== "") {
+       262 +                      User.findById(newAssignedUser, function (err, user) {
+       263 +                          if (!err && user) {
+       264 +                              if (newCompleted) {
+       265 +                                  // Task became completed, remove from pendingTasks
+       266 +                                  user.pendingTasks = 
+           + user.pendingTasks.filter(function(id) {
+       267 +                                      return id !== taskId;
+       268 +                                  });
+       269 +                              } else {
+       270 +                                  // Task became incomplete, add to pendingTasks
+       271 +                                  if (user.pendingTasks.indexOf(taskId) === -1) {
+       272 +                                      user.pendingTasks.push(taskId);
+       273 +                                  }
+       274 +                              }
+       275 +                              user.save(function (err) {});
+       276 +                          }
+       277 +                      });
+       278 +                  }
+       279 +  
+       280 +                  res.status(200).json({
+       281 +                      message: "Task updated successfully",
+       282 +                      data: updatedTask
+       283 +                  });
+       284 +              });
+       285 +          });
+       286 +      });
+       287 +  
+       288        // DELETE /api/tasks/:id - Delete a task by ID
+       289        taskIdRoute.delete(function (req, res) {
+       290            Task.findById(req.params.id, function (err, task) {
+
+● Perfect! I've implemented PUT for both users and tasks with complete two-way reference handling.
+
+  PUT /api/users/:id
+
+  Test in Postman:
+  - Method: PUT
+  - URL: http://localhost:3000/api/users/{user_id}
+  - Body → raw → JSON:
+
+  {
+    "name": "Jane Updated",
+    "email": "jane.updated@example.com",
+    "pendingTasks": ["673a1111111111111111111", "673a2222222222222222222"]
+  }
+
+  What happens:
+  - Updates the user's name and email
+  - Tasks in pendingTasks are assigned to this user (assignedUser and assignedUserName updated)
+  - Tasks removed from pendingTasks are unassigned
+  - Validates that name and email are present
+  - Checks for duplicate email
+
+  PUT /api/tasks/:id
+
+  Test in Postman:
+  - Method: PUT
+  - URL: http://localhost:3000/api/tasks/{task_id}
+  - Body → raw → JSON:
+
+  {
+    "name": "Updated Task",
+    "description": "This task has been updated",
+    "deadline": "2025-12-01",
+    "completed": false,
+    "assignedUser": "673a3333333333333333333",
+    "assignedUserName": "John Doe"
+  }
+
+  What happens:
+  - Updates all task fields
+  - If assignedUser changes:
+    - Removes task from old user's pendingTasks
+    - Adds task to new user's pendingTasks (only if not completed)
+  - If completed changes to true: removes from user's pendingTasks
+  - If completed changes to false: adds to user's pendingTasks
+  - Validates that name and deadline are present
+
+  Test marking a task complete:
+  {
+    "name": "Updated Task",
+    "deadline": "2025-12-01",
+    "completed": true,
+    "assignedUser": "673a3333333333333333333",
+    "assignedUserName": "John Doe"
+  }
+  The task will be removed from the user's pendingTasks array automatically!
+
+> pendingTasks doesn't seem to be automatically updating for users. I tried to PUT a task with an 
+assigned user to an existing user, but that user's pendingTasks is still empty 
+
+● Let me check the issue. The problem is likely in the POST /api/tasks endpoint - it's not adding the
+   task to the user's pendingTasks when the task is created. Let me fix that first, and also verify
+  the PUT logic.
+
+● Read(routes\tasks.js)
+  ⎿  Read 45 lines
+
+● Found it! The POST /api/tasks endpoint doesn't add the task to the user's pendingTasks. Let me fix
+  that:
+
+● Update(routes\tasks.js)
+  ⎿  Updated routes\tasks.js with 12 additions                                                    
+       130                    });
+       131                }
+       132    
+       133 +              // If task is assigned to a user and not completed, add to user's 
+           + pendingTasks
+       134 +              if (savedTask.assignedUser && savedTask.assignedUser !== "" && 
+           + !savedTask.completed) {
+       135 +                  User.findById(savedTask.assignedUser, function (err, user) {
+       136 +                      if (!err && user) {
+       137 +                          if (user.pendingTasks.indexOf(savedTask._id.toString()) === 
+           + -1) {
+       138 +                              user.pendingTasks.push(savedTask._id.toString());
+       139 +                              user.save(function (err) {});
+       140 +                          }
+       141 +                      }
+       142 +                  });
+       143 +              }
+       144 +  
+       145                res.status(201).json({
+       146                    message: "Task created successfully",
+       147                    data: savedTask
+
+● Read(routes\users.js)
+  ⎿  Read 45 lines
+
+● Update(routes\users.js)
+  ⎿  Updated routes\users.js with 9 additions                                                     
+       126                    });
+       127                }
+       128    
+       129 +              // If user is created with pendingTasks, assign those tasks to this user
+       130 +              if (savedUser.pendingTasks && savedUser.pendingTasks.length > 0) {
+       131 +                  Task.updateMany(
+       132 +                      { _id: { $in: savedUser.pendingTasks } },
+       133 +                      { assignedUser: savedUser._id.toString(), assignedUserName: 
+           + savedUser.name },
+       134 +                      function (err) {}
+       135 +                  );
+       136 +              }
+       137 +  
+       138                res.status(201).json({
+       139                    message: "User created successfully",
+       140                    data: savedUser
+
+● Fixed! I found the issue - the POST endpoints weren't updating the two-way references. Here's what
+  I fixed:
+
+  Changes Made:
+
+  1. POST /api/tasks (routes/tasks.js:133-143)
+  - Now adds the task to the user's pendingTasks array when a task is created with an assignedUser
+  (if not completed)
+
+  2. POST /api/users (routes/users.js:129-136)
+  - Now assigns tasks to the user when a user is created with pendingTasks
+
+  Test the Two-Way Reference:
+
+  Test 1: Create a task assigned to a user
+
+  1. First, create a user and note the _id:
+  POST http://localhost:3000/api/users
+  {
+    "name": "Alice Smith",
+    "email": "alice@example.com"
+  }
+
+  2. Create a task assigned to that user:
+  POST http://localhost:3000/api/tasks
+  {
+    "name": "Review code",
+    "deadline": "2025-11-20",
+    "completed": false,
+    "assignedUser": "673a1234567890abcdef1234",
+    "assignedUserName": "Alice Smith"
+  }
+  (Replace the assignedUser with the actual user ID from step 1)
+
+  3. Now GET the user - you should see the task ID in their pendingTasks:
+  GET http://localhost:3000/api/users/673a1234567890abcdef1234
+
+  Test 2: Update a task to assign it to a user (using PUT)
+
+  PUT http://localhost:3000/api/tasks/{task_id}
+  {
+    "name": "Updated task",
+    "deadline": "2025-11-25",
+    "completed": false,
+    "assignedUser": "673a1234567890abcdef1234",
+    "assignedUserName": "Alice Smith"
+  }
+
+  Then check the user's pendingTasks - it should now include this task!
+
+> before i test this, my DB is rather cluttered now and i'd like to clean it. How can i use the 
+dbClean.py script? 
+
+● To use the dbClean.py script:
+
+  1. Make sure your server is running:
+  npm start
+  Your server should be running on port 3000.
+
+  2. Open a new terminal and run:
+
+  On Windows:
+  python database_scripts\dbClean.py -u "localhost" -p 3000
+
+  Or if you have Python 3 specifically:
+  python3 database_scripts\dbClean.py -u "localhost" -p 3000
+
+  3. You should see:
+  All users and tasks removed at localhost:3000
+
+  This will delete all users and tasks from your MongoDB database.
+
+  If you want to repopulate with test data after cleaning:
+  python database_scripts\dbFill.py -u "localhost" -p 3000 -n 20 -t 100
+  This creates 20 users and 100 tasks with realistic data.
+
+  Note: The script uses your API endpoints to delete everything, so:
+  - Your server must be running
+  - Your DELETE endpoints must be working (which they are!)
+  - Don't include /api/ in the URL, just use localhost
+
+> I need to ensure two-way reference between tasks and users. for example, currently I can create a 
+task that's assigned to a user ID that's not in users, which should not be allowed to happen 
+
+● You're absolutely right! We need to validate that assigned users exist and that pending tasks
+  exist. Let me add validation to both POST and PUT endpoints.
+
+● Update(routes\tasks.js)
+  ⎿  Updated routes\tasks.js with 57 additions and 37 removals                                    
+       102                });
+       103            }
+       104    
+       105 -          // Create a new task
+       106 -          var task = new Task();
+       107 -          task.name = req.body.name;
+       108 -          task.deadline = req.body.deadline;
+       105 +          // If assignedUser is provided, validate that the user exists
+       106 +          if (req.body.assignedUser && req.body.assignedUser !== "") {
+       107 +              User.findById(req.body.assignedUser, function (err, user) {
+       108 +                  if (err || !user) {
+       109 +                      return res.status(404).json({
+       110 +                          message: "User not found",
+       111 +                          data: {}
+       112 +                      });
+       113 +                  }
+       114    
+       115 -          // Set optional fields if provided
+       116 -          if (req.body.description) {
+       117 -              task.description = req.body.description;
+       115 +                  // User exists, proceed with task creation
+       116 +                  createTask();
+       117 +              });
+       118 +          } else {
+       119 +              // No assignedUser, proceed with task creation
+       120 +              createTask();
+       121            }
+       122 -          if (req.body.completed !== undefined) {
+       123 -              task.completed = req.body.completed;
+       124 -          }
+       125 -          if (req.body.assignedUser) {
+       126 -              task.assignedUser = req.body.assignedUser;
+       127 -          }
+       128 -          if (req.body.assignedUserName) {
+       129 -              task.assignedUserName = req.body.assignedUserName;
+       130 -          }
+       122    
+       123 -          // Save the task
+       124 -          task.save(function (err, savedTask) {
+       125 -              if (err) {
+       126 -                  return res.status(500).json({
+       127 -                      message: "Internal Server Error",
+       128 -                      data: {}
+       129 -                  });
+       123 +          function createTask() {
+       124 +              // Create a new task
+       125 +              var task = new Task();
+       126 +              task.name = req.body.name;
+       127 +              task.deadline = req.body.deadline;
+       128 +  
+       129 +              // Set optional fields if provided
+       130 +              if (req.body.description) {
+       131 +                  task.description = req.body.description;
+       132                }
+       133 +              if (req.body.completed !== undefined) {
+       134 +                  task.completed = req.body.completed;
+       135 +              }
+       136 +              if (req.body.assignedUser) {
+       137 +                  task.assignedUser = req.body.assignedUser;
+       138 +              }
+       139 +              if (req.body.assignedUserName) {
+       140 +                  task.assignedUserName = req.body.assignedUserName;
+       141 +              }
+       142    
+       143 -              // If task is assigned to a user and not completed, add to user's 
+           - pendingTasks
+       144 -              if (savedTask.assignedUser && savedTask.assignedUser !== "" && 
+           - !savedTask.completed) {
+       145 -                  User.findById(savedTask.assignedUser, function (err, user) {
+       146 -                      if (!err && user) {
+       147 -                          if (user.pendingTasks.indexOf(savedTask._id.toString()) === 
+           - -1) {
+       148 -                              user.pendingTasks.push(savedTask._id.toString());
+       149 -                              user.save(function (err) {});
+       143 +              // Save the task
+       144 +              task.save(function (err, savedTask) {
+       145 +                  if (err) {
+       146 +                      return res.status(500).json({
+       147 +                          message: "Internal Server Error",
+       148 +                          data: {}
+       149 +                      });
+       150 +                  }
+       151 +  
+       152 +                  // If task is assigned to a user and not completed, add to user's 
+           + pendingTasks
+       153 +                  if (savedTask.assignedUser && savedTask.assignedUser !== "" && 
+           + !savedTask.completed) {
+       154 +                      User.findById(savedTask.assignedUser, function (err, user) {
+       155 +                          if (!err && user) {
+       156 +                              if (user.pendingTasks.indexOf(savedTask._id.toString()) 
+           + === -1) {
+       157 +                                  user.pendingTasks.push(savedTask._id.toString());
+       158 +                                  user.save(function (err) {});
+       159 +                              }
+       160                            }
+       161 -                      }
+       162 -                  });
+       163 -              }
+       161 +                      });
+       162 +                  }
+       163    
+       164 -              res.status(201).json({
+       165 -                  message: "Task created successfully",
+       166 -                  data: savedTask
+       164 +                  res.status(201).json({
+       165 +                      message: "Task created successfully",
+       166 +                      data: savedTask
+       167 +                  });
+       168                });
+       169 -          });
+       169 +          }
+       170        });
+       171    
+       172        var taskIdRoute = router.route('/tasks/:id');
+
+● Update(routes\tasks.js)
+  ⎿  Updated routes\tasks.js with 32 additions and 13 removals                       
+       221                });
+       222            }
+       223    
+       224 -          Task.findById(req.params.id, function (err, task) {
+       225 -              if (err) {
+       226 -                  return res.status(404).json({
+       227 -                      message: "Task not found",
+       228 -                      data: {}
+       229 -                  });
+       230 -              }
+       224 +          // If assignedUser is provided, validate that the user exists
+       225 +          if (req.body.assignedUser && req.body.assignedUser !== "") {
+       226 +              User.findById(req.body.assignedUser, function (err, user) {
+       227 +                  if (err || !user) {
+       228 +                      return res.status(404).json({
+       229 +                          message: "User not found",
+       230 +                          data: {}
+       231 +                      });
+       232 +                  }
+       233    
+       234 -              if (!task) {
+       235 -                  return res.status(404).json({
+       236 -                      message: "Task not found",
+       237 -                      data: {}
+       238 -                  });
+       239 -              }
+       234 +                  // User exists, proceed with update
+       235 +                  updateTask();
+       236 +              });
+       237 +          } else {
+       238 +              // No assignedUser or empty string, proceed with update
+       239 +              updateTask();
+       240 +          }
+       241    
+       242 +          function updateTask() {
+       243 +              Task.findById(req.params.id, function (err, task) {
+       244 +                  if (err) {
+       245 +                      return res.status(404).json({
+       246 +                          message: "Task not found",
+       247 +                          data: {}
+       248 +                      });
+       249 +                  }
+       250 +  
+       251 +                  if (!task) {
+       252 +                      return res.status(404).json({
+       253 +                          message: "Task not found",
+       254 +                          data: {}
+       255 +                      });
+       256 +                  }
+       257 +  
+       258                // Store old values
+       259                var oldAssignedUser = task.assignedUser || "";
+       260                var oldCompleted = task.completed || false;
+
+● Read(routes\tasks.js)
+  ⎿  Read 30 lines
+
+● Update(routes\tasks.js)
+  ⎿  Updated routes\tasks.js with 2 additions and 1 removal     
+       333                        data: updatedTask
+       334                    });
+       335                });
+       336 -          });
+       336 +              });
+       337 +          }
+       338        });
+       339    
+       340        // DELETE /api/tasks/:id - Delete a task by ID
+
+● Update(routes\users.js)
+  ⎿  Updated routes\users.js with 59 additions and 31 removals                                    
+       100                });
+       101            }
+       102    
+       103 -          // Create a new user
+       104 -          var user = new User();
+       105 -          user.name = req.body.name;
+       106 -          user.email = req.body.email;
+       103 +          // If pendingTasks is provided, validate that all tasks exist
+       104 +          if (req.body.pendingTasks && req.body.pendingTasks.length > 0) {
+       105 +              Task.find({ _id: { $in: req.body.pendingTasks } }, function (err, tasks)
+           +  {
+       106 +                  if (err) {
+       107 +                      return res.status(500).json({
+       108 +                          message: "Internal Server Error",
+       109 +                          data: {}
+       110 +                      });
+       111 +                  }
+       112    
+       113 -          // Set pendingTasks if provided, otherwise use default empty array
+       114 -          if (req.body.pendingTasks) {
+       115 -              user.pendingTasks = req.body.pendingTasks;
+       113 +                  // Check if all tasks exist
+       114 +                  if (tasks.length !== req.body.pendingTasks.length) {
+       115 +                      return res.status(404).json({
+       116 +                          message: "One or more tasks not found",
+       117 +                          data: {}
+       118 +                      });
+       119 +                  }
+       120 +  
+       121 +                  // All tasks exist, proceed with user creation
+       122 +                  createUser();
+       123 +              });
+       124 +          } else {
+       125 +              // No pendingTasks, proceed with user creation
+       126 +              createUser();
+       127            }
+       128    
+       129 -          // Save the user
+       130 -          user.save(function (err, savedUser) {
+       131 -              if (err) {
+       132 -                  // Check for duplicate email error
+       133 -                  if (err.code === 11000) {
+       134 -                      return res.status(400).json({
+       135 -                          message: "Bad Request: User with this email already exists",
+       129 +          function createUser() {
+       130 +              // Create a new user
+       131 +              var user = new User();
+       132 +              user.name = req.body.name;
+       133 +              user.email = req.body.email;
+       134 +  
+       135 +              // Set pendingTasks if provided, otherwise use default empty array
+       136 +              if (req.body.pendingTasks) {
+       137 +                  user.pendingTasks = req.body.pendingTasks;
+       138 +              }
+       139 +  
+       140 +              // Save the user
+       141 +              user.save(function (err, savedUser) {
+       142 +                  if (err) {
+       143 +                      // Check for duplicate email error
+       144 +                      if (err.code === 11000) {
+       145 +                          return res.status(400).json({
+       146 +                              message: "Bad Request: User with this email already 
+           + exists",
+       147 +                              data: {}
+       148 +                          });
+       149 +                      }
+       150 +                      return res.status(500).json({
+       151 +                          message: "Internal Server Error",
+       152                            data: {}
+       153                        });
+       154                    }
+       155 -                  return res.status(500).json({
+       156 -                      message: "Internal Server Error",
+       157 -                      data: {}
+       158 -                  });
+       159 -              }
+       155    
+       156 -              // If user is created with pendingTasks, assign those tasks to this user
+       157 -              if (savedUser.pendingTasks && savedUser.pendingTasks.length > 0) {
+       158 -                  Task.updateMany(
+       159 -                      { _id: { $in: savedUser.pendingTasks } },
+       160 -                      
+           -  { assignedUser: savedUser._id.toString(), assignedUserName: savedUser.name },
+       161 -                      function (err) {}
+       162 -                  );
+       163 -              }
+       156 +                  
+           +  // If user is created with pendingTasks, assign those tasks to this user
+       157 +                  if (savedUser.pendingTasks && savedUser.pendingTasks.length > 0) {
+       158 +                      Task.updateMany(
+       159 +                          { _id: { $in: savedUser.pendingTasks } },
+       160 +                          
+           +  { assignedUser: savedUser._id.toString(), assignedUserName: savedUser.name },
+       161 +                          function (err) {}
+       162 +                      );
+       163 +                  }
+       164    
+       165 -              res.status(201).json({
+       166 -                  message: "User created successfully",
+       167 -                  data: savedUser
+       165 +                  res.status(201).json({
+       166 +                      message: "User created successfully",
+       167 +                      data: savedUser
+       168 +                  });
+       169                });
+       170 -          });
+       170 +          }
+       171        });
+       172    
+       173        var userIdRoute = router.route('/users/:id');
+
+● Read(routes\users.js)
+  ⎿  Read 70 lines
+
+● Update(routes\users.js)
+  ⎿  Updated routes\users.js with 35 additions and 8 removals                                 
+       253                        });
+       254                    }
+       255    
+       256 -                  // Store old pendingTasks
+       257 -                  var oldPendingTasks = user.pendingTasks || [];
+       256 +                  // If pendingTasks is provided, validate that all tasks exist
+       257                    var newPendingTasks = req.body.pendingTasks || [];
+       258 +                  if (newPendingTasks.length > 0) {
+       259 +                      Task.find({ _id: { $in: newPendingTasks } }, function (err, 
+           + tasks) {
+       260 +                          if (err) {
+       261 +                              return res.status(500).json({
+       262 +                                  message: "Internal Server Error",
+       263 +                                  data: {}
+       264 +                              });
+       265 +                          }
+       266    
+       267 -                  // Update user fields
+       268 -                  user.name = req.body.name;
+       269 -                  user.email = req.body.email;
+       270 -                  user.pendingTasks = newPendingTasks;
+       267 +                          // Check if all tasks exist
+       268 +                          if (tasks.length !== newPendingTasks.length) {
+       269 +                              return res.status(404).json({
+       270 +                                  message: "One or more tasks not found",
+       271 +                                  data: {}
+       272 +                              });
+       273 +                          }
+       274    
+       275 -                  // Save the updated user
+       276 -                  user.save(function (err, updatedUser) {
+       275 +                          // All tasks exist, proceed with update
+       276 +                          updateUser();
+       277 +                      });
+       278 +                  } else {
+       279 +                      // No pendingTasks to validate, proceed with update
+       280 +                      updateUser();
+       281 +                  }
+       282 +  
+       283 +                  function updateUser() {
+       284 +                      // Store old pendingTasks
+       285 +                      var oldPendingTasks = user.pendingTasks || [];
+       286 +  
+       287 +                      // Update user fields
+       288 +                      user.name = req.body.name;
+       289 +                      user.email = req.body.email;
+       290 +                      user.pendingTasks = newPendingTasks;
+       291 +  
+       292 +                      // Save the updated user
+       293 +                      user.save(function (err, updatedUser) {
+       294                        if (err) {
+       295                            return res.status(500).json({
+       296                                message: "Internal Server Error",
+
+● Read(routes\users.js)
+  ⎿  Read 15 lines
+
+● Update(routes\users.js)
+  ⎿  Updated routes\users.js with 2 additions and 1 removal                
+       331                            message: "User updated successfully",
+       332                            data: updatedUser
+       333                        });
+       334 -                  });
+       334 +                      });
+       335 +                  }
+       336                });
+       337            });
+       338        });
+
+● Perfect! I've added comprehensive validation to ensure two-way reference integrity. Here's what's
+  been fixed:
+
+  Validation Added:
+
+  Tasks (POST & PUT):
+
+  - Validates that assignedUser exists before creating/updating a task
+  - Returns 404 "User not found" if you try to assign a task to a non-existent user
+
+  Users (POST & PUT):
+
+  - Validates that all tasks in pendingTasks exist before creating/updating a user
+  - Returns 404 "One or more tasks not found" if any task ID doesn't exist in the database
+
+  Test the Validation:
+
+  1. Try to create a task with invalid user ID:
+  POST http://localhost:3000/api/tasks
+  {
+    "name": "Test task",
+    "deadline": "2025-11-20",
+    "assignedUser": "000000000000000000000000"
+  }
+  Expected: 404 error "User not found"
+
+  2. Try to create a user with invalid task ID:
+  POST http://localhost:3000/api/users
+  {
+    "name": "Test User",
+    "email": "test@example.com",
+    "pendingTasks": ["000000000000000000000000"]
+  }
+  Expected: 404 error "One or more tasks not found"
+
+  3. Valid two-way reference (should work):
+  - Create a user (note the ID)
+  - Create a task assigned to that user
+  - GET the user - task should be in pendingTasks
+  - GET the task - should show the user in assignedUser and assignedUserName
+
+  Now your API enforces referential integrity!
+
+> Things seem OK, but I want to make sure. Look through the README.md and FAQ.md. You'll see that 
+there's some core functionality described that's worth 70% of my grade. Read through that and report 
+to me how much of that functionality has been implemented. 
+
+● Read(README.md)
+  ⎿  Read 175 lines
+
+● Read(FAQ.md)
+  ⎿  Read 208 lines
+
+● Based on my review of the README and FAQ, here's a comprehensive report on the 70% core 
+  functionality:
+
+  ✅ FULLY IMPLEMENTED (70% Core Functionality)
+
+  According to README line 135: "The example queries above will cover 70% grade"
+
+  1. All 10 Required Endpoints ✓
+
+  Users:
+  - GET /api/users ✓
+  - POST /api/users ✓
+  - GET /api/users/:id ✓
+  - PUT /api/users/:id ✓
+  - DELETE /api/users/:id ✓
+
+  Tasks:
+  - GET /api/tasks ✓
+  - POST /api/tasks ✓
+  - GET /api/tasks/:id ✓
+  - PUT /api/tasks/:id ✓
+  - DELETE /api/tasks/:id ✓
+
+  2. All 6 Query Parameters ✓
+
+  - where - filter results ✓
+  - sort - sort results (1=asc, -1=desc) ✓
+  - select - include/exclude fields ✓
+  - skip - pagination ✓
+  - limit - limit results (default 100 for tasks, unlimited for users) ✓
+  - count - return count instead of documents ✓
+  - select works on /:id endpoints ✓
+
+  3. All 8 Example Queries ✓
+
+  1. GET all tasks ✓
+  2. GET all users ✓
+  3. GET user by ID using where ✓
+  4. GET completed tasks ✓
+  5. GET tasks with $in operator ✓
+  6. GET users sorted by name ✓
+  7. GET users without _id field ✓
+  8. GET tasks with skip & limit ✓
+  9. Combined parameters ✓
+
+  4. Schemas ✓
+
+  User Schema: name, email, pendingTasks, dateCreated ✓
+  Task Schema: name, description, deadline, completed, assignedUser, assignedUserName, dateCreated ✓
+
+  5. Response Format ✓
+
+  - All responses use {message, data} format ✓
+  - Error responses also use {message, data} ✓
+  - Human-readable error messages ✓
+
+  6. HTTP Status Codes ✓
+
+  - 200 (success) ✓
+  - 201 (created) ✓
+  - 400 (bad request) ✓
+  - 404 (not found) ✓
+  - 500 (server error) ✓
+
+  7. Validation ✓
+
+  - Users require name and email ✓
+  - Unique email constraint ✓
+  - Tasks require name and deadline ✓
+  - Validates assignedUser exists ✓
+  - Validates pendingTasks exist ✓
+
+  8. Two-Way References ✓
+
+  - PUT Task updates User's pendingTasks ✓
+  - DELETE Task removes from User's pendingTasks ✓
+  - PUT User updates Task assignments ✓
+  - DELETE User unassigns tasks ✓
+  - Completed tasks NOT in pendingTasks ✓
+
+  ⚠️ TO-DO (Required for submission):
+
+  1. Database Population: Use dbFill.py to populate with 20+ users and 100+ tasks
+  2. Uncomment .env in .gitignore: Prevent committing credentials (loses 1% if not done)
+  3. Test all example queries: Verify they work as expected
+
+  📊 GRADE ESTIMATE:
+
+  Core Functionality (70%): ~100% implemented ✓
+
+  The remaining 30% will be corner cases tested during grading. Your implementation should handle
+  most of these well given the robust validation and two-way reference handling you have.
+
+> give me the most crucial tests I should run 
+
+● Here are the most crucial tests to verify your 70% core functionality is working:
+
+● CRITICAL TESTS (Must Pass for 70%)
+
+  Part 1: Basic CRUD Operations
+
+  Test 1: Create User
+  POST http://localhost:3000/api/users
+  Body (JSON):
+  {
+    "name": "Alice Smith",
+    "email": "alice@example.com"
+  }
+  Expected: 201, returns user with _id, name, email, pendingTasks:[], dateCreated
+
+  Test 2: Create Task
+  POST http://localhost:3000/api/tasks
+  Body (JSON):
+  {
+    "name": "Complete homework",
+    "deadline": "2025-11-20",
+    "description": "Finish assignment",
+    "completed": false
+  }
+  Expected: 201, returns task with all fields
+
+  Test 3: Get All Users
+  GET http://localhost:3000/api/users
+  Expected: 200, returns array of users
+
+  Test 4: Get All Tasks (with default limit)
+  GET http://localhost:3000/api/tasks
+  Expected: 200, returns max 100 tasks
+
+  Part 2: Query Parameters (Example Queries from README)
+
+  Test 5: Filter by ID
+  GET http://localhost:3000/api/users?where={"_id":"<actual_user_id>"}
+  Expected: 200, returns array with 1 user
+
+  Test 6: Filter completed tasks
+  GET http://localhost:3000/api/tasks?where={"completed":true}
+  Expected: 200, returns only completed tasks
+
+  Test 7: Sort users by name
+  GET http://localhost:3000/api/users?sort={"name":1}
+  Expected: 200, users sorted alphabetically
+
+  Test 8: Select fields (exclude _id)
+  GET http://localhost:3000/api/users?select={"_id":0}
+  Expected: 200, users without _id field
+
+  Test 9: Pagination (skip & limit)
+  GET http://localhost:3000/api/tasks?skip=5&limit=10
+  Expected: 200, returns 10 tasks starting from 6th
+
+  Test 10: Count query
+  GET http://localhost:3000/api/users?count=true
+  Expected: 200, returns number (not array)
+
+  Test 11: Combined parameters
+  GET http://localhost:3000/api/users?sort={"name":1}&limit=5
+  Expected: 200, 5 users sorted by name
+
+  Test 12: $in operator
+  GET http://localhost:3000/api/tasks?where={"_id":{"$in":["<id1>","<id2>"]}}
+  Expected: 200, returns those specific tasks
+
+  Part 3: Two-Way References (CRITICAL!)
+
+  Test 13: Create Task with assignedUser
+  1. Create a user, note the _id
+  2. POST http://localhost:3000/api/tasks
+     {
+       "name": "Review code",
+       "deadline": "2025-11-25",
+       "completed": false,
+       "assignedUser": "<user_id>",
+       "assignedUserName": "Alice Smith"
+     }
+  3. GET the user by ID
+  Expected: User's pendingTasks array contains the new task ID
+
+  Test 14: PUT task to change assignedUser
+  1. Create 2 users
+  2. Create task assigned to user1
+  3. PUT task to assign to user2
+  4. GET both users
+  Expected: Task removed from user1.pendingTasks, added to user2.pendingTasks
+
+  Test 15: Mark task as completed
+  1. Create user with assigned task
+  2. PUT task with completed: true
+  3. GET the user
+  Expected: Task removed from user's pendingTasks
+
+  Test 16: DELETE task removes from user
+  1. Create user with assigned task
+  2. DELETE the task
+  3. GET the user
+  Expected: pendingTasks no longer contains deleted task
+
+  Test 17: DELETE user unassigns tasks
+  1. Create user with assigned tasks
+  2. DELETE the user
+  3. GET the tasks
+  Expected: Tasks now have assignedUser:"", assignedUserName:"unassigned"
+
+  Part 4: Validation
+
+  Test 18: Create user without required fields
+  POST http://localhost:3000/api/users
+  Body: {"name": "Test"} (missing email)
+  Expected: 400 "Name and email are required"
+
+  Test 19: Duplicate email
+  1. Create user with email test@example.com
+  2. Try to create another with same email
+  Expected: 400 "User with this email already exists"
+
+  Test 20: Create task with invalid assignedUser
+  POST http://localhost:3000/api/tasks
+  Body: {
+    "name": "Test",
+    "deadline": "2025-11-20",
+    "assignedUser": "000000000000000000000000"
+  }
+  Expected: 404 "User not found"
+
+  Part 5: ID Endpoints
+
+  Test 21: GET user by ID
+  GET http://localhost:3000/api/users/<user_id>
+  Expected: 200, returns single user object (not array)
+
+  Test 22: GET with select parameter on /:id
+  GET http://localhost:3000/api/users/<user_id>?select={"_id":0}
+  Expected: 200, user without _id field
+
+  Test 23: GET non-existent ID
+  GET http://localhost:3000/api/users/000000000000000000000000
+  Expected: 404 "User not found"
+
+  Test 24: PUT to update user
+  PUT http://localhost:3000/api/users/<user_id>
+  Body: {
+    "name": "Updated Name",
+    "email": "updated@example.com",
+    "pendingTasks": []
+  }
+  Expected: 200, user updated
+
+  QUICK TEST SCRIPT
+
+  Run these 5 critical tests if you're short on time:
+
+  1. Create user → Create task assigned to that user → Verify user.pendingTasks contains task
+  (Two-way reference)
+  2. GET /api/tasks?where={"completed":true} (Query parameter)
+  3. GET /api/users?sort={"name":1}&limit=5 (Combined parameters)
+  4. DELETE user → Verify tasks are unassigned (Cascade delete)
+  5. Try to create task with fake user ID → Expect 404 (Validation)
+
+  If all 5 pass, your core 70% is solid! 🎯
+
+
+

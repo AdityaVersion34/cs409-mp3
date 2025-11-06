@@ -118,7 +118,18 @@ module.exports = function (router) {
                     });
                 }
 
-                // All tasks exist, proceed with user creation
+                // Check if any of the tasks are completed
+                var completedTask = tasks.find(function(task) {
+                    return task.completed === true;
+                });
+                if (completedTask) {
+                    return res.status(400).json({
+                        message: "Bad Request: Cannot add completed tasks to pendingTasks",
+                        data: {}
+                    });
+                }
+
+                // All tasks exist and are not completed, proceed with user creation
                 createUser();
             });
         } else {
@@ -272,7 +283,18 @@ module.exports = function (router) {
                             });
                         }
 
-                        // All tasks exist, proceed with update
+                        // Check if any of the tasks are completed
+                        var completedTask = tasks.find(function(task) {
+                            return task.completed === true;
+                        });
+                        if (completedTask) {
+                            return res.status(400).json({
+                                message: "Bad Request: Cannot add completed tasks to pendingTasks",
+                                data: {}
+                            });
+                        }
+
+                        // All tasks exist and are not completed, proceed with update
                         updateUser();
                     });
                 } else {
@@ -281,8 +303,9 @@ module.exports = function (router) {
                 }
 
                 function updateUser() {
-                    // Store old pendingTasks
+                    // Store old pendingTasks and old name
                     var oldPendingTasks = user.pendingTasks || [];
+                    var oldName = user.name;
 
                     // Update user fields
                     user.name = req.body.name;
@@ -322,7 +345,16 @@ module.exports = function (router) {
                     if (addedTasks.length > 0) {
                         Task.updateMany(
                             { _id: { $in: addedTasks } },
-                            { assignedUser: req.params.id, assignedUserName: user.name },
+                            { assignedUser: req.params.id, assignedUserName: updatedUser.name },
+                            function (err) {}
+                        );
+                    }
+
+                    // If user's name changed, update assignedUserName in ALL tasks assigned to this user
+                    if (oldName !== updatedUser.name) {
+                        Task.updateMany(
+                            { assignedUser: req.params.id },
+                            { assignedUserName: updatedUser.name },
                             function (err) {}
                         );
                     }

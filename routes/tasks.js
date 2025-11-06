@@ -103,6 +103,7 @@ module.exports = function (router) {
         }
 
         // If assignedUser is provided, validate that the user exists
+        var validatedUserName = null;
         if (req.body.assignedUser && req.body.assignedUser !== "") {
             User.findById(req.body.assignedUser, function (err, user) {
                 if (err || !user) {
@@ -112,7 +113,8 @@ module.exports = function (router) {
                     });
                 }
 
-                // User exists, proceed with task creation
+                // User exists, capture their name and proceed with task creation
+                validatedUserName = user.name;
                 createTask();
             });
         } else {
@@ -135,9 +137,8 @@ module.exports = function (router) {
             }
             if (req.body.assignedUser) {
                 task.assignedUser = req.body.assignedUser;
-            }
-            if (req.body.assignedUserName) {
-                task.assignedUserName = req.body.assignedUserName;
+                // Always use the validated user's actual name, not what the client sends
+                task.assignedUserName = validatedUserName;
             }
 
             // Save the task
@@ -222,6 +223,7 @@ module.exports = function (router) {
         }
 
         // If assignedUser is provided, validate that the user exists
+        var validatedUserName = null;
         if (req.body.assignedUser && req.body.assignedUser !== "") {
             User.findById(req.body.assignedUser, function (err, user) {
                 if (err || !user) {
@@ -231,7 +233,8 @@ module.exports = function (router) {
                     });
                 }
 
-                // User exists, proceed with update
+                // User exists, capture their name and proceed with update
+                validatedUserName = user.name;
                 updateTask();
             });
         } else {
@@ -265,7 +268,8 @@ module.exports = function (router) {
             task.deadline = req.body.deadline;
             task.completed = req.body.completed !== undefined ? req.body.completed : false;
             task.assignedUser = req.body.assignedUser || "";
-            task.assignedUserName = req.body.assignedUserName || "unassigned";
+            // Always use the validated user's actual name, not what the client sends
+            task.assignedUserName = validatedUserName || "unassigned";
 
             var newAssignedUser = task.assignedUser;
             var newCompleted = task.completed;

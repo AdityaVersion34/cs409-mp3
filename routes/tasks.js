@@ -1,13 +1,13 @@
-var User = require('../models/user');
+var Task = require('../models/task');
 
 module.exports = function (router) {
 
-    var usersRoute = router.route('/users');
+    var tasksRoute = router.route('/tasks');
 
-    // GET /api/users - Get list of users with query parameters
-    usersRoute.get(function (req, res) {
+    // GET /api/tasks - Get list of tasks with query parameters
+    tasksRoute.get(function (req, res) {
         // Build query
-        var query = User.find();
+        var query = Task.find();
 
         // Apply 'where' filter if provided
         if (req.query.where) {
@@ -53,9 +53,11 @@ module.exports = function (router) {
             query = query.skip(parseInt(req.query.skip));
         }
 
-        // Apply 'limit' if provided (no default limit for users)
+        // Apply 'limit' if provided, default to 100 for tasks
         if (req.query.limit) {
             query = query.limit(parseInt(req.query.limit));
+        } else {
+            query = query.limit(100);
         }
 
         // Check if 'count' is requested
@@ -74,7 +76,7 @@ module.exports = function (router) {
             });
         } else {
             // Execute query and return results
-            query.exec(function (err, users) {
+            query.exec(function (err, tasks) {
                 if (err) {
                     return res.status(500).json({
                         message: "Internal Server Error",
@@ -83,42 +85,44 @@ module.exports = function (router) {
                 }
                 res.status(200).json({
                     message: "OK",
-                    data: users
+                    data: tasks
                 });
             });
         }
     });
 
-    // POST /api/users - Create a new user
-    usersRoute.post(function (req, res) {
+    // POST /api/tasks - Create a new task
+    tasksRoute.post(function (req, res) {
         // Validate required fields
-        if (!req.body.name || !req.body.email) {
+        if (!req.body.name || !req.body.deadline) {
             return res.status(400).json({
-                message: "Bad Request: Name and email are required",
+                message: "Bad Request: Name and deadline are required",
                 data: {}
             });
         }
 
-        // Create a new user
-        var user = new User();
-        user.name = req.body.name;
-        user.email = req.body.email;
+        // Create a new task
+        var task = new Task();
+        task.name = req.body.name;
+        task.deadline = req.body.deadline;
 
-        // Set pendingTasks if provided, otherwise use default empty array
-        if (req.body.pendingTasks) {
-            user.pendingTasks = req.body.pendingTasks;
+        // Set optional fields if provided
+        if (req.body.description) {
+            task.description = req.body.description;
+        }
+        if (req.body.completed !== undefined) {
+            task.completed = req.body.completed;
+        }
+        if (req.body.assignedUser) {
+            task.assignedUser = req.body.assignedUser;
+        }
+        if (req.body.assignedUserName) {
+            task.assignedUserName = req.body.assignedUserName;
         }
 
-        // Save the user
-        user.save(function (err, savedUser) {
+        // Save the task
+        task.save(function (err, savedTask) {
             if (err) {
-                // Check for duplicate email error
-                if (err.code === 11000) {
-                    return res.status(400).json({
-                        message: "Bad Request: User with this email already exists",
-                        data: {}
-                    });
-                }
                 return res.status(500).json({
                     message: "Internal Server Error",
                     data: {}
@@ -126,17 +130,17 @@ module.exports = function (router) {
             }
 
             res.status(201).json({
-                message: "User created successfully",
-                data: savedUser
+                message: "Task created successfully",
+                data: savedTask
             });
         });
     });
 
-    var userIdRoute = router.route('/users/:id');
+    var taskIdRoute = router.route('/tasks/:id');
 
-    // GET /api/users/:id - Get a specific user by ID
-    userIdRoute.get(function (req, res) {
-        var query = User.findById(req.params.id);
+    // GET /api/tasks/:id - Get a specific task by ID
+    taskIdRoute.get(function (req, res) {
+        var query = Task.findById(req.params.id);
 
         // Apply 'select' if provided
         if (req.query.select) {
@@ -151,25 +155,25 @@ module.exports = function (router) {
             }
         }
 
-        query.exec(function (err, user) {
+        query.exec(function (err, task) {
             if (err) {
                 // Handle invalid ObjectId format as 404
                 return res.status(404).json({
-                    message: "User not found",
+                    message: "Task not found",
                     data: {}
                 });
             }
 
-            if (!user) {
+            if (!task) {
                 return res.status(404).json({
-                    message: "User not found",
+                    message: "Task not found",
                     data: {}
                 });
             }
 
             res.status(200).json({
                 message: "OK",
-                data: user
+                data: task
             });
         });
     });

@@ -102,51 +102,71 @@ module.exports = function (router) {
             });
         }
 
-        // Create a new task
-        var task = new Task();
-        task.name = req.body.name;
-        task.deadline = req.body.deadline;
+        // If assignedUser is provided, validate that the user exists
+        if (req.body.assignedUser && req.body.assignedUser !== "") {
+            User.findById(req.body.assignedUser, function (err, user) {
+                if (err || !user) {
+                    return res.status(404).json({
+                        message: "User not found",
+                        data: {}
+                    });
+                }
 
-        // Set optional fields if provided
-        if (req.body.description) {
-            task.description = req.body.description;
-        }
-        if (req.body.completed !== undefined) {
-            task.completed = req.body.completed;
-        }
-        if (req.body.assignedUser) {
-            task.assignedUser = req.body.assignedUser;
-        }
-        if (req.body.assignedUserName) {
-            task.assignedUserName = req.body.assignedUserName;
-        }
-
-        // Save the task
-        task.save(function (err, savedTask) {
-            if (err) {
-                return res.status(500).json({
-                    message: "Internal Server Error",
-                    data: {}
-                });
-            }
-
-            // If task is assigned to a user and not completed, add to user's pendingTasks
-            if (savedTask.assignedUser && savedTask.assignedUser !== "" && !savedTask.completed) {
-                User.findById(savedTask.assignedUser, function (err, user) {
-                    if (!err && user) {
-                        if (user.pendingTasks.indexOf(savedTask._id.toString()) === -1) {
-                            user.pendingTasks.push(savedTask._id.toString());
-                            user.save(function (err) {});
-                        }
-                    }
-                });
-            }
-
-            res.status(201).json({
-                message: "Task created successfully",
-                data: savedTask
+                // User exists, proceed with task creation
+                createTask();
             });
-        });
+        } else {
+            // No assignedUser, proceed with task creation
+            createTask();
+        }
+
+        function createTask() {
+            // Create a new task
+            var task = new Task();
+            task.name = req.body.name;
+            task.deadline = req.body.deadline;
+
+            // Set optional fields if provided
+            if (req.body.description) {
+                task.description = req.body.description;
+            }
+            if (req.body.completed !== undefined) {
+                task.completed = req.body.completed;
+            }
+            if (req.body.assignedUser) {
+                task.assignedUser = req.body.assignedUser;
+            }
+            if (req.body.assignedUserName) {
+                task.assignedUserName = req.body.assignedUserName;
+            }
+
+            // Save the task
+            task.save(function (err, savedTask) {
+                if (err) {
+                    return res.status(500).json({
+                        message: "Internal Server Error",
+                        data: {}
+                    });
+                }
+
+                // If task is assigned to a user and not completed, add to user's pendingTasks
+                if (savedTask.assignedUser && savedTask.assignedUser !== "" && !savedTask.completed) {
+                    User.findById(savedTask.assignedUser, function (err, user) {
+                        if (!err && user) {
+                            if (user.pendingTasks.indexOf(savedTask._id.toString()) === -1) {
+                                user.pendingTasks.push(savedTask._id.toString());
+                                user.save(function (err) {});
+                            }
+                        }
+                    });
+                }
+
+                res.status(201).json({
+                    message: "Task created successfully",
+                    data: savedTask
+                });
+            });
+        }
     });
 
     var taskIdRoute = router.route('/tasks/:id');
@@ -201,20 +221,39 @@ module.exports = function (router) {
             });
         }
 
-        Task.findById(req.params.id, function (err, task) {
-            if (err) {
-                return res.status(404).json({
-                    message: "Task not found",
-                    data: {}
-                });
-            }
+        // If assignedUser is provided, validate that the user exists
+        if (req.body.assignedUser && req.body.assignedUser !== "") {
+            User.findById(req.body.assignedUser, function (err, user) {
+                if (err || !user) {
+                    return res.status(404).json({
+                        message: "User not found",
+                        data: {}
+                    });
+                }
 
-            if (!task) {
-                return res.status(404).json({
-                    message: "Task not found",
-                    data: {}
-                });
-            }
+                // User exists, proceed with update
+                updateTask();
+            });
+        } else {
+            // No assignedUser or empty string, proceed with update
+            updateTask();
+        }
+
+        function updateTask() {
+            Task.findById(req.params.id, function (err, task) {
+                if (err) {
+                    return res.status(404).json({
+                        message: "Task not found",
+                        data: {}
+                    });
+                }
+
+                if (!task) {
+                    return res.status(404).json({
+                        message: "Task not found",
+                        data: {}
+                    });
+                }
 
             // Store old values
             var oldAssignedUser = task.assignedUser || "";
@@ -294,7 +333,8 @@ module.exports = function (router) {
                     data: updatedTask
                 });
             });
-        });
+            });
+        }
     });
 
     // DELETE /api/tasks/:id - Delete a task by ID

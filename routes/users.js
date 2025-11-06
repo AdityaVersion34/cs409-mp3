@@ -100,46 +100,74 @@ module.exports = function (router) {
             });
         }
 
-        // Create a new user
-        var user = new User();
-        user.name = req.body.name;
-        user.email = req.body.email;
-
-        // Set pendingTasks if provided, otherwise use default empty array
-        if (req.body.pendingTasks) {
-            user.pendingTasks = req.body.pendingTasks;
-        }
-
-        // Save the user
-        user.save(function (err, savedUser) {
-            if (err) {
-                // Check for duplicate email error
-                if (err.code === 11000) {
-                    return res.status(400).json({
-                        message: "Bad Request: User with this email already exists",
+        // If pendingTasks is provided, validate that all tasks exist
+        if (req.body.pendingTasks && req.body.pendingTasks.length > 0) {
+            Task.find({ _id: { $in: req.body.pendingTasks } }, function (err, tasks) {
+                if (err) {
+                    return res.status(500).json({
+                        message: "Internal Server Error",
                         data: {}
                     });
                 }
-                return res.status(500).json({
-                    message: "Internal Server Error",
-                    data: {}
-                });
-            }
 
-            // If user is created with pendingTasks, assign those tasks to this user
-            if (savedUser.pendingTasks && savedUser.pendingTasks.length > 0) {
-                Task.updateMany(
-                    { _id: { $in: savedUser.pendingTasks } },
-                    { assignedUser: savedUser._id.toString(), assignedUserName: savedUser.name },
-                    function (err) {}
-                );
-            }
+                // Check if all tasks exist
+                if (tasks.length !== req.body.pendingTasks.length) {
+                    return res.status(404).json({
+                        message: "One or more tasks not found",
+                        data: {}
+                    });
+                }
 
-            res.status(201).json({
-                message: "User created successfully",
-                data: savedUser
+                // All tasks exist, proceed with user creation
+                createUser();
             });
-        });
+        } else {
+            // No pendingTasks, proceed with user creation
+            createUser();
+        }
+
+        function createUser() {
+            // Create a new user
+            var user = new User();
+            user.name = req.body.name;
+            user.email = req.body.email;
+
+            // Set pendingTasks if provided, otherwise use default empty array
+            if (req.body.pendingTasks) {
+                user.pendingTasks = req.body.pendingTasks;
+            }
+
+            // Save the user
+            user.save(function (err, savedUser) {
+                if (err) {
+                    // Check for duplicate email error
+                    if (err.code === 11000) {
+                        return res.status(400).json({
+                            message: "Bad Request: User with this email already exists",
+                            data: {}
+                        });
+                    }
+                    return res.status(500).json({
+                        message: "Internal Server Error",
+                        data: {}
+                    });
+                }
+
+                // If user is created with pendingTasks, assign those tasks to this user
+                if (savedUser.pendingTasks && savedUser.pendingTasks.length > 0) {
+                    Task.updateMany(
+                        { _id: { $in: savedUser.pendingTasks } },
+                        { assignedUser: savedUser._id.toString(), assignedUserName: savedUser.name },
+                        function (err) {}
+                    );
+                }
+
+                res.status(201).json({
+                    message: "User created successfully",
+                    data: savedUser
+                });
+            });
+        }
     });
 
     var userIdRoute = router.route('/users/:id');
@@ -225,17 +253,44 @@ module.exports = function (router) {
                     });
                 }
 
-                // Store old pendingTasks
-                var oldPendingTasks = user.pendingTasks || [];
+                // If pendingTasks is provided, validate that all tasks exist
                 var newPendingTasks = req.body.pendingTasks || [];
+                if (newPendingTasks.length > 0) {
+                    Task.find({ _id: { $in: newPendingTasks } }, function (err, tasks) {
+                        if (err) {
+                            return res.status(500).json({
+                                message: "Internal Server Error",
+                                data: {}
+                            });
+                        }
 
-                // Update user fields
-                user.name = req.body.name;
-                user.email = req.body.email;
-                user.pendingTasks = newPendingTasks;
+                        // Check if all tasks exist
+                        if (tasks.length !== newPendingTasks.length) {
+                            return res.status(404).json({
+                                message: "One or more tasks not found",
+                                data: {}
+                            });
+                        }
 
-                // Save the updated user
-                user.save(function (err, updatedUser) {
+                        // All tasks exist, proceed with update
+                        updateUser();
+                    });
+                } else {
+                    // No pendingTasks to validate, proceed with update
+                    updateUser();
+                }
+
+                function updateUser() {
+                    // Store old pendingTasks
+                    var oldPendingTasks = user.pendingTasks || [];
+
+                    // Update user fields
+                    user.name = req.body.name;
+                    user.email = req.body.email;
+                    user.pendingTasks = newPendingTasks;
+
+                    // Save the updated user
+                    user.save(function (err, updatedUser) {
                     if (err) {
                         return res.status(500).json({
                             message: "Internal Server Error",
@@ -276,7 +331,8 @@ module.exports = function (router) {
                         message: "User updated successfully",
                         data: updatedUser
                     });
-                });
+                    });
+                }
             });
         });
     });

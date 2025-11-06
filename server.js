@@ -31,6 +31,17 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(bodyParser.json());
 
+// Root route
+app.get('/', function(req, res) {
+    res.json({
+        message: 'Welcome to the Task Management API',
+        endpoints: {
+            users: '/api/users',
+            tasks: '/api/tasks'
+        }
+    });
+});
+
 // Use routes as a module (see index.js)
 require('./routes')(app, router);
 

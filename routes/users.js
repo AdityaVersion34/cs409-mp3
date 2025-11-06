@@ -126,6 +126,15 @@ module.exports = function (router) {
                 });
             }
 
+            // If user is created with pendingTasks, assign those tasks to this user
+            if (savedUser.pendingTasks && savedUser.pendingTasks.length > 0) {
+                Task.updateMany(
+                    { _id: { $in: savedUser.pendingTasks } },
+                    { assignedUser: savedUser._id.toString(), assignedUserName: savedUser.name },
+                    function (err) {}
+                );
+            }
+
             res.status(201).json({
                 message: "User created successfully",
                 data: savedUser
@@ -171,6 +180,103 @@ module.exports = function (router) {
             res.status(200).json({
                 message: "OK",
                 data: user
+            });
+        });
+    });
+
+    // PUT /api/users/:id - Update a user by ID
+    userIdRoute.put(function (req, res) {
+        // Validate required fields
+        if (!req.body.name || !req.body.email) {
+            return res.status(400).json({
+                message: "Bad Request: Name and email are required",
+                data: {}
+            });
+        }
+
+        User.findById(req.params.id, function (err, user) {
+            if (err) {
+                return res.status(404).json({
+                    message: "User not found",
+                    data: {}
+                });
+            }
+
+            if (!user) {
+                return res.status(404).json({
+                    message: "User not found",
+                    data: {}
+                });
+            }
+
+            // Check for duplicate email (but allow if it's the same user)
+            User.findOne({ email: req.body.email }, function (err, existingUser) {
+                if (err) {
+                    return res.status(500).json({
+                        message: "Internal Server Error",
+                        data: {}
+                    });
+                }
+
+                if (existingUser && existingUser._id.toString() !== req.params.id) {
+                    return res.status(400).json({
+                        message: "Bad Request: User with this email already exists",
+                        data: {}
+                    });
+                }
+
+                // Store old pendingTasks
+                var oldPendingTasks = user.pendingTasks || [];
+                var newPendingTasks = req.body.pendingTasks || [];
+
+                // Update user fields
+                user.name = req.body.name;
+                user.email = req.body.email;
+                user.pendingTasks = newPendingTasks;
+
+                // Save the updated user
+                user.save(function (err, updatedUser) {
+                    if (err) {
+                        return res.status(500).json({
+                            message: "Internal Server Error",
+                            data: {}
+                        });
+                    }
+
+                    // Update two-way references for tasks
+                    // Tasks that were removed from pendingTasks should be unassigned
+                    var removedTasks = oldPendingTasks.filter(function(taskId) {
+                        return newPendingTasks.indexOf(taskId) === -1;
+                    });
+
+                    // Tasks that were added to pendingTasks should be assigned to this user
+                    var addedTasks = newPendingTasks.filter(function(taskId) {
+                        return oldPendingTasks.indexOf(taskId) === -1;
+                    });
+
+                    // Unassign removed tasks
+                    if (removedTasks.length > 0) {
+                        Task.updateMany(
+                            { _id: { $in: removedTasks } },
+                            { assignedUser: "", assignedUserName: "unassigned" },
+                            function (err) {}
+                        );
+                    }
+
+                    // Assign added tasks
+                    if (addedTasks.length > 0) {
+                        Task.updateMany(
+                            { _id: { $in: addedTasks } },
+                            { assignedUser: req.params.id, assignedUserName: user.name },
+                            function (err) {}
+                        );
+                    }
+
+                    res.status(200).json({
+                        message: "User updated successfully",
+                        data: updatedUser
+                    });
+                });
             });
         });
     });

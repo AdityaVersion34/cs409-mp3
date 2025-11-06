@@ -1,4 +1,5 @@
 var Task = require('../models/task');
+var User = require('../models/user');
 
 module.exports = function (router) {
 
@@ -129,6 +130,18 @@ module.exports = function (router) {
                 });
             }
 
+            // If task is assigned to a user and not completed, add to user's pendingTasks
+            if (savedTask.assignedUser && savedTask.assignedUser !== "" && !savedTask.completed) {
+                User.findById(savedTask.assignedUser, function (err, user) {
+                    if (!err && user) {
+                        if (user.pendingTasks.indexOf(savedTask._id.toString()) === -1) {
+                            user.pendingTasks.push(savedTask._id.toString());
+                            user.save(function (err) {});
+                        }
+                    }
+                });
+            }
+
             res.status(201).json({
                 message: "Task created successfully",
                 data: savedTask
@@ -175,6 +188,177 @@ module.exports = function (router) {
                 message: "OK",
                 data: task
             });
+        });
+    });
+
+    // PUT /api/tasks/:id - Update a task by ID
+    taskIdRoute.put(function (req, res) {
+        // Validate required fields
+        if (!req.body.name || !req.body.deadline) {
+            return res.status(400).json({
+                message: "Bad Request: Name and deadline are required",
+                data: {}
+            });
+        }
+
+        Task.findById(req.params.id, function (err, task) {
+            if (err) {
+                return res.status(404).json({
+                    message: "Task not found",
+                    data: {}
+                });
+            }
+
+            if (!task) {
+                return res.status(404).json({
+                    message: "Task not found",
+                    data: {}
+                });
+            }
+
+            // Store old values
+            var oldAssignedUser = task.assignedUser || "";
+            var oldCompleted = task.completed || false;
+
+            // Update task fields
+            task.name = req.body.name;
+            task.description = req.body.description || "";
+            task.deadline = req.body.deadline;
+            task.completed = req.body.completed !== undefined ? req.body.completed : false;
+            task.assignedUser = req.body.assignedUser || "";
+            task.assignedUserName = req.body.assignedUserName || "unassigned";
+
+            var newAssignedUser = task.assignedUser;
+            var newCompleted = task.completed;
+
+            // Save the updated task
+            task.save(function (err, updatedTask) {
+                if (err) {
+                    return res.status(500).json({
+                        message: "Internal Server Error",
+                        data: {}
+                    });
+                }
+
+                // Handle two-way reference updates
+                var taskId = req.params.id;
+
+                // Case 1: AssignedUser changed
+                if (oldAssignedUser !== newAssignedUser) {
+                    // Remove from old user's pendingTasks
+                    if (oldAssignedUser && oldAssignedUser !== "") {
+                        User.findById(oldAssignedUser, function (err, oldUser) {
+                            if (!err && oldUser) {
+                                oldUser.pendingTasks = oldUser.pendingTasks.filter(function(id) {
+                                    return id !== taskId;
+                                });
+                                oldUser.save(function (err) {});
+                            }
+                        });
+                    }
+
+                    // Add to new user's pendingTasks (only if not completed)
+                    if (newAssignedUser && newAssignedUser !== "" && !newCompleted) {
+                        User.findById(newAssignedUser, function (err, newUser) {
+                            if (!err && newUser) {
+                                if (newUser.pendingTasks.indexOf(taskId) === -1) {
+                                    newUser.pendingTasks.push(taskId);
+                                    newUser.save(function (err) {});
+                                }
+                            }
+                        });
+                    }
+                }
+                // Case 2: AssignedUser same, but completion status changed
+                else if (oldCompleted !== newCompleted && newAssignedUser && newAssignedUser !== "") {
+                    User.findById(newAssignedUser, function (err, user) {
+                        if (!err && user) {
+                            if (newCompleted) {
+                                // Task became completed, remove from pendingTasks
+                                user.pendingTasks = user.pendingTasks.filter(function(id) {
+                                    return id !== taskId;
+                                });
+                            } else {
+                                // Task became incomplete, add to pendingTasks
+                                if (user.pendingTasks.indexOf(taskId) === -1) {
+                                    user.pendingTasks.push(taskId);
+                                }
+                            }
+                            user.save(function (err) {});
+                        }
+                    });
+                }
+
+                res.status(200).json({
+                    message: "Task updated successfully",
+                    data: updatedTask
+                });
+            });
+        });
+    });
+
+    // DELETE /api/tasks/:id - Delete a task by ID
+    taskIdRoute.delete(function (req, res) {
+        Task.findById(req.params.id, function (err, task) {
+            if (err) {
+                // Handle invalid ObjectId format as 404
+                return res.status(404).json({
+                    message: "Task not found",
+                    data: {}
+                });
+            }
+
+            if (!task) {
+                return res.status(404).json({
+                    message: "Task not found",
+                    data: {}
+                });
+            }
+
+            // If task is assigned to a user, remove it from their pendingTasks
+            if (task.assignedUser && task.assignedUser !== "") {
+                User.findById(task.assignedUser, function (err, user) {
+                    if (!err && user) {
+                        // Remove the task ID from the user's pendingTasks array
+                        user.pendingTasks = user.pendingTasks.filter(function(taskId) {
+                            return taskId !== req.params.id;
+                        });
+                        user.save(function (err) {
+                            // Continue with deletion even if user update fails
+                        });
+                    }
+
+                    // Delete the task
+                    Task.findByIdAndRemove(req.params.id, function (err, deletedTask) {
+                        if (err) {
+                            return res.status(500).json({
+                                message: "Internal Server Error",
+                                data: {}
+                            });
+                        }
+
+                        res.status(200).json({
+                            message: "Task deleted successfully",
+                            data: deletedTask
+                        });
+                    });
+                });
+            } else {
+                // Task is not assigned, just delete it
+                Task.findByIdAndRemove(req.params.id, function (err, deletedTask) {
+                    if (err) {
+                        return res.status(500).json({
+                            message: "Internal Server Error",
+                            data: {}
+                        });
+                    }
+
+                    res.status(200).json({
+                        message: "Task deleted successfully",
+                        data: deletedTask
+                    });
+                });
+            }
         });
     });
 
